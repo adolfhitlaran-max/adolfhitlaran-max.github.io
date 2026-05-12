@@ -1,9 +1,18 @@
-*.png filter=lfs diff=lfs merge=lfs -text
-*.jpg filter=lfs diff=lfs merge=lfs -text
-*.jpeg filter=lfs diff=lfs merge=lfs -text
-*.mp3 filter=lfs diff=lfs merge=lfs -text
-*.wav filter=lfs diff=lfs merge=lfs -text
+# Keep website-facing assets out of LFS so GitHub Pages can serve them.
+*.png -filter -diff -merge -text
+*.jpg -filter -diff -merge -text
+*.jpeg -filter -diff -merge -text
+*.gif -filter -diff -merge -text
+*.webp -filter -diff -merge -text
+*.svg -filter -diff -merge -text
+*.mp3 -filter -diff -merge -text
+*.wav -filter -diff -merge -text
+# Keep oversized archive/video source files in LFS.
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
 *.webm filter=lfs diff=lfs merge=lfs -text
 *.psd filter=lfs diff=lfs merge=lfs -text
+# Game videos are under GitHub's normal file limit and need to play on Pages.
+games/**/*.mp4 -filter -diff -merge -text
+games/**/*.mov -filter -diff -merge -text
+games/**/*.webm -filter -diff -merge -text
