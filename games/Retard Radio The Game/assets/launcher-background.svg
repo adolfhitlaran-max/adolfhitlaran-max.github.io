@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Barricade defense scene">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#17234b"/>
+      <stop offset="0.62" stop-color="#08101f"/>
+      <stop offset="1" stop-color="#050711"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#12182b"/>
+      <stop offset="1" stop-color="#20283d"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1270" cy="145" r="86" fill="#b8f3ff" opacity="0.18" filter="url(#glow)"/>
+
+  <g opacity="0.56">
+    <rect x="650" y="245" width="150" height="360" fill="#080d1a"/>
+    <rect x="825" y="185" width="120" height="420" fill="#0c1222"/>
+    <rect x="975" y="285" width="180" height="320" fill="#070b16"/>
+    <rect x="1190" y="235" width="130" height="370" fill="#0d1427"/>
+    <rect x="1350" y="310" width="160" height="295" fill="#080d18"/>
+  </g>
+
+  <g opacity="0.26" fill="#5dd8ff">
+    <rect x="680" y="285" width="28" height="34"/>
+    <rect x="735" y="338" width="28" height="34"/>
+    <rect x="852" y="238" width="22" height="30"/>
+    <rect x="902" y="306" width="22" height="30"/>
+    <rect x="1015" y="330" width="32" height="34"/>
+    <rect x="1090" y="382" width="32" height="34"/>
+    <rect x="1220" y="280" width="26" height="32"/>
+    <rect x="1280" y="356" width="26" height="32"/>
+  </g>
+
+  <path d="M0 610 C260 570 455 600 710 584 C980 568 1230 586 1600 548 L1600 900 L0 900 Z" fill="url(#road)"/>
+  <path d="M130 690 C470 640 1010 640 1510 598" fill="none" stroke="#ffd166" stroke-width="8" stroke-dasharray="38 28" opacity="0.38"/>
+
+  <g transform="translate(95 455)">
+    <rect x="0" y="58" width="122" height="265" rx="10" fill="#4a2f1c"/>
+    <g fill="#916334">
+      <rect x="14" y="84" width="94" height="18"/>
+      <rect x="14" y="132" width="94" height="18"/>
+      <rect x="14" y="180" width="94" height="18"/>
+      <rect x="14" y="228" width="94" height="18"/>
+      <rect x="14" y="276" width="94" height="18"/>
+    </g>
+    <path d="M102 6 L102 102" stroke="#d7f7ff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M108 8 L206 36 L108 68 Z" fill="#ffd166"/>
+    <rect x="120" y="48" width="10" height="276" fill="#2c1a10" opacity="0.55"/>
+  </g>
+
+  <g opacity="0.86">
+    <circle cx="1030" cy="640" r="28" fill="#ff4d6d"/>
+    <rect x="1004" y="650" width="52" height="72" rx="13" fill="#ff4d6d"/>
+    <circle cx="1190" cy="604" r="36" fill="#9b5de5"/>
+    <rect x="1155" y="620" width="70" height="105" rx="16" fill="#9b5de5"/>
+    <circle cx="1360" cy="652" r="24" fill="#ffb703"/>
+    <rect x="1336" y="662" width="48" height="62" rx="12" fill="#ffb703"/>
+  </g>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#000000" opacity="0.12"/>
+</svg>

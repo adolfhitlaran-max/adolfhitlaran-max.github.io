@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Agartha - Breakthrough</title>
+  <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+</head>
+<body class="menu-page prelevel-page">
+  <main class="prelevel-shell">
+    <canvas id="prelevelCanvas" width="1280" height="720"></canvas>
+    <div class="prelevel-hud">
+      <div><span>Health</span><strong id="preHp">100</strong></div>
+      <div><span>Enemies</span><strong id="preKills">0 / 50</strong></div>
+      <div><span>Threat</span><strong id="preThreat">Incoming</strong></div>
+    </div>
+    <button id="prelevelInteractBtn" class="prelevel-interact" type="button" hidden>Talk</button>
+    <div id="prelevelDevPanel" class="prelevel-dev-panel" hidden>
+      <div class="prelevel-dev-head">
+        <strong>Pregame Dev</strong>
+        <span>?dev=1</span>
+      </div>
+      <label>
+        Edit
+        <select id="prelevelDevMode">
+          <option value="goal">Goal Position</option>
+          <option value="start">Player Spawn</option>
+          <option value="meet">Meet Character</option>
+          <option value="wall">Draw Wall</option>
+          <option value="section">Draw Section</option>
+        </select>
+      </label>
+      <div class="prelevel-dev-counts">
+        <label>
+          Grunts
+          <input id="prelevelGruntCount" type="number" min="0" max="999" step="1" value="10" />
+        </label>
+        <label>
+          Runners
+          <input id="prelevelRunnerCount" type="number" min="0" max="999" step="1" value="4" />
+        </label>
+      </div>
+      <div class="prelevel-dev-actions">
+        <button id="prelevelAddSectionBtn" type="button">Finish Shape</button>
+        <button id="prelevelUndoBtn" type="button">Undo</button>
+      </div>
+      <div class="prelevel-dev-actions">
+        <button id="prelevelSaveBtn" type="button">Save</button>
+        <button id="prelevelExportBtn" type="button">Export</button>
+        <button id="prelevelResetBtn" type="button">Reset</button>
+      </div>
+      <p class="prelevel-dev-hint">Click map points around a wall or section, then Finish Shape to connect the edges.</p>
+      <textarea id="prelevelConfigExport" class="prelevel-config-export" hidden readonly></textarea>
+      <p id="prelevelDevStatus">Dev mode ready.</p>
+    </div>
+    <div id="prelevelOverlay" class="prelevel-overlay show">
+      <h1>Breakthrough</h1>
+      <p>Hold the crash zone. Move with WASD or arrows, aim with the mouse, and clear 50 enemies with the pistol before the road opens.</p>
+      <button id="preStartBtn" class="menu-button primary" type="button">Start</button>
+    </div>
+  </main>
+  <script src="scripts/prelevel.js"></script>
+</body>
+</html>

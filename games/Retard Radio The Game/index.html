@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hold The Line</title>
+  <link rel="stylesheet" href="styles/style.css?v=menu-overhaul-11" />
+</head>
+<body>
+  <div id="gameShell">
+    <div id="gameFrame">
+      <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+      <div class="hud">
+        <div class="topbar">
+          <div class="card player-card">
+            <div class="labelRow"><span>Player Health</span><span id="hpNumber">100 / 100</span></div>
+            <div class="bar"><span id="hpFill"></span></div>
+            <div class="labelRow"><span>Stamina</span><span id="staminaNumber">100 / 100</span></div>
+            <div class="bar"><span id="staminaFill"></span></div>
+            <div class="labelRow"><span>Ashtar</span><span id="baseNumber">100 / 100</span></div>
+            <div class="bar"><span id="baseFill"></span></div>
+            <div class="statLine"><span>Combo</span><span id="comboText">x0</span></div>
+          </div>
+
+          <div class="card wave-card">
+            <div id="waveText">Wave 1</div>
+            <div id="levelText">Level 1: Crash Site</div>
+            <div id="enemyText">Enemies: 0</div>
+            <div id="coinsText">Coins: 0</div>
+            <div id="upgradeText">Upgrades: 0</div>
+            <div id="threatText">Threat: Calm</div>
+          </div>
+        </div>
+
+        <div class="abilityRail" aria-hidden="true">
+          <div class="abilityChip" id="attackChip"><span>Punch</span><strong>Ready</strong></div>
+          <div class="abilityChip" id="specialChip"><span>Shockwave</span><strong>Ready</strong></div>
+          <div class="abilityChip" id="shootChip"><span>Energy Shot</span><strong>Ready</strong></div>
+          <div class="abilityChip" id="dashChip"><span>Dash</span><strong>Ready</strong></div>
+        </div>
+
+        <div class="controls">
+          <strong>Controls:</strong> A/D or arrows move - W/Arrow Up jumps - left click punches - 3-hit punch combo kicks - Q shoots - Space shockwave - Shift dash - P/Esc pause - R restart
+        </div>
+
+        <div class="assetNote">
+          Protect Ashtar. Chain KOs, grab heals, and choose a build between waves.
+        </div>
+
+        <div id="floorDevPanel" class="floor-dev-panel" hidden>
+          <div class="floor-dev-head">
+            <strong>Floor Dev</strong>
+            <span id="floorDevValue">Y 585</span>
+          </div>
+          <input id="floorDevSlider" type="range" min="420" max="690" step="1" value="585" />
+          <div class="floor-dev-actions">
+            <button id="floorDevSaveBtn" type="button">Save</button>
+            <button id="floorDevResetBtn" type="button">Reset</button>
+          </div>
+          <div class="floor-dev-section">
+            <div class="floor-dev-head">
+              <strong>Ashtar Path</strong>
+              <span id="runnerPathDevValue">2 points</span>
+            </div>
+            <p class="dev-hint">Click the map to draw the route. Points use Ashtar's feet.</p>
+            <div class="floor-dev-actions">
+              <button id="runnerPathSaveBtn" type="button">Save Path</button>
+              <button id="runnerPathUndoBtn" type="button">Undo Point</button>
+            </div>
+            <div class="floor-dev-actions">
+              <button id="runnerPathClearBtn" type="button">Clear Path</button>
+              <button id="runnerPathResetBtn" type="button">Reset Path</button>
+            </div>
+            <textarea id="runnerPathExport" class="runner-path-export" rows="6" spellcheck="false" placeholder="Exported path JSON"></textarea>
+            <div class="floor-dev-actions">
+              <button id="runnerPathExportBtn" type="button">Export</button>
+              <button id="runnerPathImportBtn" type="button">Import</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="startScreen" class="message show">
+        <h1>Hold The Line</h1>
+        <p>Protect Ashtar through escalating waves. Every clear earns an upgrade choice, every KO feeds your combo, and every breakthrough puts him in danger.</p>
+        <div class="buttonRow">
+          <button id="startBtn">Start Campaign</button>
+          <button id="levelSelectBtn">Select Level</button>
+          <button id="howBtn">How to Play</button>
+          <button id="launcherBtn">Launcher</button>
+        </div>
+      </div>
+
+      <div id="levelScreen" class="message level-message">
+        <h1>Select Level</h1>
+        <p>Choose where the defense begins. Campaign progress and upgrades reset when you start a new run from here.</p>
+        <div id="levelChoices" class="level-grid"></div>
+        <div class="buttonRow">
+          <button id="levelBackBtn">Back</button>
+        </div>
+      </div>
+
+      <div id="pauseScreen" class="message">
+        <h1>Paused</h1>
+        <p>Catch your breath, then get back to Ashtar.</p>
+        <div class="buttonRow">
+          <button id="resumeBtn">Resume</button>
+          <button id="pauseLevelSelectBtn">Select Level</button>
+          <button id="restartBtnPause">Restart</button>
+          <button id="pauseLauncherBtn">Launcher</button>
+        </div>
+      </div>
+
+      <div id="upgradeScreen" class="message upgrade-message">
+        <h1>Wave Cleared</h1>
+        <p id="upgradeIntro">Choose one upgrade before the next wave hits.</p>
+        <div id="upgradeChoices" class="upgrade-grid"></div>
+        <div class="upgrade-footer">
+          <span id="upgradePointsText">Upgrades chosen: 0</span>
+          <button id="upgradeSkipBtn">Ashtar Heal</button>
+        </div>
+      </div>
+
+      <div id="resultScreen" class="message">
+        <h1 id="resultTitle">Victory</h1>
+        <p id="resultBody">You held the line.</p>
+        <div class="buttonRow">
+          <button id="nextBtn">Next Level</button>
+          <button id="resultMapBtn">Level Map</button>
+          <button id="restartBtnResult">Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/save-system.js"></script>
+  <script src="scripts/upgrades.js"></script>
+  <script src="scripts/game.js?v=genz-shot-small-4"></script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+:root{
+  --bg:#0b0f14;
+  --panel:#121a22;
+  --panel2:#0f151c;
+  --text:#e8eef7;
+  --muted:#9fb0c5;
+  --accent:#55d6be;
+  --danger:#ff5c7a;
+  --warn:#ffd166;
+}
+
+*{ box-sizing:border-box; }
+html,body{
+  margin:0;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+a{ color:inherit; }
+
+.wrap{
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card{
+  background: linear-gradient(180deg, var(--panel), var(--panel2));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.row{
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+.col{
+  flex:1 1 300px;
+}
+
+h1,h2,h3{
+  margin: 0 0 10px 0;
+  letter-spacing: 0.3px;
+}
+
+p{ color:var(--muted); line-height:1.45; }
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text);
+  cursor:pointer;
+  user-select:none;
+  text-decoration:none;
+  font-weight: 600;
+}
+.btn:hover{ background: rgba(255,255,255,0.09); }
+.btn.primary{
+  background: rgba(85,214,190,0.18);
+  border-color: rgba(85,214,190,0.35);
+}
+.btn.danger{
+  background: rgba(255,92,122,0.12);
+  border-color: rgba(255,92,122,0.25);
+}
+.btn:disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 12px;
+}
+@media (max-width: 780px){
+  .grid{ grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+}
+
+.badge{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.hr{
+  height:1px;
+  background: rgba(255,255,255,0.08);
+  margin: 14px 0;
+}
+
+.kbd{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+}
+
+.canvasShell{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+canvas{
+  width: 100%;
+  max-width: none;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: #091018;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.small{ font-size: 13px; color: var(--muted); }

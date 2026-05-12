@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Agartha - Salvage</title>
+  <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+</head>
+<body class="menu-page prelevel-page">
+  <main class="prelevel-shell">
+    <canvas id="level2Canvas" width="1280" height="720"></canvas>
+    <div class="prelevel-hud">
+      <div><span>Health</span><strong id="level2Hp">100</strong></div>
+      <div><span>Stamina</span><strong id="level2Stamina">100</strong></div>
+      <div><span>Ashtar</span><strong id="level2Ashtar">Close</strong></div>
+      <div><span>Objective</span><strong id="level2Objective">Move Out</strong></div>
+      <div><span>Enemies</span><strong id="level2Enemies">0</strong></div>
+      <div><span>Upgrades</span><strong id="level2Upgrades">0</strong></div>
+    </div>
+    <button id="level2InteractBtn" class="prelevel-interact" type="button" hidden>Finish</button>
+    <div id="level2DevPanel" class="prelevel-dev-panel" hidden>
+      <div class="prelevel-dev-head">
+        <strong>Level 2 Dev</strong>
+        <span>?dev=1</span>
+      </div>
+      <label>
+        Edit
+        <select id="level2DevMode">
+          <option value="start">Player Spawn</option>
+          <option value="ashtarSpawn">Ashtar Spawn</option>
+          <option value="midpoint">Second Portion</option>
+          <option value="phase2Trigger">Phase 2 Trigger</option>
+          <option value="bellaSpawn">Bella Spawn</option>
+          <option value="defensePoint">Defense Point</option>
+          <option value="goal">Exit Point</option>
+          <option value="bus">Bus PNG</option>
+          <option value="ashtarWorkPoint">Ashtar Work Point</option>
+          <option value="enemyPath">Enemy Path</option>
+          <option value="phase2EnemyPath">Phase 2 Path</option>
+          <option value="wall">Wall</option>
+        </select>
+      </label>
+      <label>
+        Enemy Type
+        <select id="level2EnemyType">
+          <option value="grunt">Grunt</option>
+          <option value="runner">Runner</option>
+        </select>
+      </label>
+      <label>
+        Total Zombies
+        <input id="level2EnemyTotal" type="number" min="0" max="80" step="1" value="20" />
+      </label>
+      <div class="prelevel-dev-actions">
+        <button id="level2SaveBtn" type="button">Save</button>
+        <button id="level2ExportBtn" type="button">Export</button>
+        <button id="level2ResetBtn" type="button">Reset</button>
+      </div>
+      <div class="prelevel-dev-actions">
+        <button id="level2FinishPathBtn" type="button">Finish Path</button>
+        <button id="level2UndoPathBtn" type="button">Undo Point</button>
+        <button id="level2ClearPathsBtn" type="button">Clear Paths</button>
+      </div>
+      <div class="prelevel-dev-actions">
+        <button id="level2SpawnEnemiesBtn" type="button">Spawn Enemies</button>
+        <button id="level2ClearEnemiesBtn" type="button">Clear Enemies</button>
+      </div>
+      <p class="prelevel-dev-hint">Click to place points. Zombies spawn across phase paths. Buses and walls block movement and line of sight.</p>
+      <textarea id="level2ConfigExport" class="prelevel-config-export" spellcheck="false" placeholder="Exported level 2 config JSON"></textarea>
+      <div class="prelevel-dev-actions">
+        <button id="level2ImportBtn" type="button">Import</button>
+      </div>
+      <p id="level2DevStatus">Dev mode ready.</p>
+    </div>
+    <div id="level2Overlay" class="prelevel-overlay show">
+      <h1>Salvage</h1>
+      <p>Move through the salvage route with Ashtar close behind. This level is ready for zombie spawns when you add them later.</p>
+      <button id="level2StartBtn" class="menu-button primary" type="button">Start</button>
+    </div>
+    <div id="level2PauseOverlay" class="prelevel-overlay">
+      <h1>Paused</h1>
+      <p>Take a breath, then keep moving through the salvage route.</p>
+      <div class="launcher-actions">
+        <button id="level2ResumeBtn" class="menu-button primary" type="button">Resume</button>
+        <a class="menu-button ghost" href="map.html">Map</a>
+      </div>
+    </div>
+  </main>
+  <script src="scripts/save-system.js"></script>
+  <script src="scripts/level2.js?v=genz-shot-small-9"></script>
+</body>
+</html>

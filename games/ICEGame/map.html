@@ -1,0 +1,715 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ICE Roundup - Operational Map</title>
+  <link rel="stylesheet" href="styles.css"/>
+
+  <style>
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      background:#06090e;
+      overflow:hidden;
+    }
+    .shell{
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* ===== Header ===== */
+    .hud{
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      background:
+        radial-gradient(900px 300px at 15% 20%, rgba(120,170,255,0.14), transparent 60%),
+        linear-gradient(180deg, rgba(15,21,28,0.92), rgba(10,14,20,0.92));
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap:wrap;
+    }
+    .hudLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:260px;
+    }
+    .brandMark{
+      width:44px; height:44px;
+      border-radius:14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+      display:grid;
+      place-items:center;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+      overflow:hidden;
+      position:relative;
+    }
+    .brandMark::after{
+      content:"";
+      position:absolute; inset:-30%;
+      background: radial-gradient(circle at 40% 35%, rgba(120,170,255,0.35), transparent 60%);
+      transform: rotate(18deg);
+      opacity:0.9;
+    }
+    .brandMark i{
+      width:20px; height:20px;
+      border-radius:6px;
+      background: linear-gradient(90deg, rgba(120,170,255,1) 50%, rgba(85,214,190,1) 50%);
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.35) inset, 0 0 18px rgba(120,170,255,0.18);
+      position:relative;
+      z-index:1;
+    }
+
+    .hudTitle{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      line-height:1.05;
+    }
+    .hudTitle h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:0.4px;
+    }
+    .hudTitle .sub{
+      color: rgba(232,238,247,0.70);
+      font-weight: 750;
+      font-size: 12px;
+      letter-spacing: 0.24px;
+      text-transform: uppercase;
+    }
+
+    .hudRight{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .badge2{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: rgba(232,238,247,0.82);
+      font-weight: 850;
+      font-size: 13px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .dot{
+      width:8px; height:8px;
+      border-radius:99px;
+      background: rgba(120,170,255,0.95);
+      box-shadow: 0 0 0 3px rgba(120,170,255,0.18);
+    }
+
+    /* ===== Stage ===== */
+    .mapWrap{
+      flex:1;
+      min-height:0;
+      display:grid;
+      place-items:center;
+      padding:14px;
+    }
+
+    .stage{
+      width: min(96vw, calc((100vh - 90px) * (16/9)));
+      height: min(calc(100vh - 90px), calc(96vw * (9/16)));
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(10,14,20,0.78);
+      box-shadow: 0 30px 100px rgba(0,0,0,0.65);
+      overflow:hidden;
+      position:relative;
+      isolation:isolate;
+    }
+
+    /* Map background */
+    .mapBG{
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55)),
+        url("assets/background/map.png");
+      background-size: cover;
+      background-position: center;
+      image-rendering: pixelated;
+      transform: scale(1.02);
+      filter: saturate(1.08) contrast(1.06);
+      z-index:0;
+    }
+
+    /* scanline + grain vibe */
+    .fxScan{
+      position:absolute;
+      inset:-20%;
+      z-index:1;
+      pointer-events:none;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(255,255,255,0.03) 0px,
+          rgba(255,255,255,0.03) 1px,
+          transparent 2px,
+          transparent 6px
+        );
+      opacity: 0.25;
+      mix-blend-mode: overlay;
+      animation: scanMove 10s linear infinite;
+      transform: translateY(-10%);
+    }
+    @keyframes scanMove{
+      0% { transform: translateY(-10%); }
+      100% { transform: translateY(10%); }
+    }
+
+    .vignette{
+      position:absolute;
+      inset:-2px;
+      pointer-events:none;
+      background: radial-gradient(closest-side at 50% 50%, transparent 55%, rgba(0,0,0,0.68) 100%);
+      opacity:0.95;
+      z-index:2;
+    }
+
+    .nodes{
+      position:absolute;
+      inset:0;
+      z-index:3;
+    }
+
+    /* Nodes */
+    .node{
+      position:absolute;
+      transform: translate(-50%, -50%) scale(1);
+      transform-origin: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(10,14,20,0.55);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.55);
+      overflow:hidden;
+      cursor:pointer;
+      user-select:none;
+      padding:0;
+      transition:
+        transform 140ms ease,
+        box-shadow 160ms ease,
+        filter 160ms ease,
+        border-color 160ms ease;
+    }
+    .node img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      image-rendering: pixelated;
+      display:block;
+      transform: scale(1.02);
+    }
+    .node:hover{
+      transform: translate(-50%, -50%) scale(4);
+      z-index: 999;
+      border-color: rgba(120,170,255,0.55);
+      box-shadow:
+        0 22px 80px rgba(0,0,0,0.80),
+        0 0 22px rgba(120,170,255,0.38),
+        0 0 50px rgba(85,214,190,0.18);
+      filter: saturate(1.15) contrast(1.06);
+    }
+
+    .nodeTip{
+      position:absolute;
+      left: 50%;
+      bottom: 110%;
+      transform: translateX(-50%);
+      display:none;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.62);
+      color: rgba(232,238,247,0.92);
+      font-weight: 950;
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.55);
+      white-space:nowrap;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      pointer-events:none;
+    }
+    .nodeTip small{
+      color: rgba(232,238,247,0.70);
+      font-weight: 900;
+    }
+    .node:hover .nodeTip{ display:inline-flex; }
+
+    /* Locked */
+    .locked{
+      cursor:not-allowed;
+      opacity: 0.70;
+      filter: grayscale(0.25);
+    }
+    .locked::after{
+      content:"LOCKED";
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      background: rgba(0,0,0,0.58);
+      color: rgba(232,238,247,0.90);
+      font-weight: 1000;
+      font-size: 12px;
+      letter-spacing: 0.6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.65);
+    }
+    .locked:hover{
+      transform: translate(-50%, -50%) scale(2.2);
+      box-shadow:
+        0 18px 60px rgba(0,0,0,0.75),
+        0 0 18px rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.14);
+      filter: grayscale(0.35);
+    }
+
+    /* Hint */
+    .stageHint{
+      position:absolute;
+      left:12px;
+      top:12px;
+      z-index: 5;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      pointer-events:auto;
+    }
+
+    /* ===== Mission panel (bottom-left) ===== */
+    .mission{
+      position:absolute;
+      left:12px;
+      bottom:12px;
+      z-index:6;
+      width: min(360px, calc(100% - 24px));
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background:
+        radial-gradient(500px 220px at 20% 10%, rgba(120,170,255,0.12), transparent 60%),
+        rgba(10,14,20,0.78);
+      box-shadow: 0 30px 90px rgba(0,0,0,0.60);
+      padding: 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .mission h3{
+      margin:0 0 6px 0;
+      font-size: 14px;
+      letter-spacing: .25px;
+    }
+    .mission .small{ opacity:.78; font-weight: 750; }
+    .missionRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .miniBadges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .miniBadge{
+      display:inline-flex;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      font-size: 12px;
+      font-weight: 900;
+      opacity:.9;
+      user-select:none;
+    }
+    .missionLock{
+      opacity:.75;
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    /* Toast */
+    .toastWrap{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 9999;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:none;
+      width: min(360px, calc(100vw - 28px));
+      background: rgba(18,26,34,0.92);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .toast b{ display:block; font-weight: 950; }
+    .toast small{ opacity:.8; font-weight: 700; }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <header class="hud">
+      <div class="hudLeft">
+        <div class="brandMark" aria-hidden="true"><i></i></div>
+        <div class="hudTitle">
+          <h1>ICE Roundup</h1>
+          <div class="sub">Operational Map • Deployments</div>
+        </div>
+      </div>
+
+      <div class="hudRight">
+        <span class="badge2"><span class="dot"></span><span id="unlockBadge">Unlocked: 1</span></span>
+        <span class="badge2">Coins: <span id="coinsBadge">0</span></span>
+        <a class="btn" href="index.html">Launcher</a>
+        <a class="btn primary" href="upgrades.html">Upgrades</a>
+      </div>
+    </header>
+
+    <main class="mapWrap">
+      <div class="stage" id="stage">
+        <div class="mapBG" aria-hidden="true"></div>
+        <div class="fxScan" aria-hidden="true"></div>
+        <div class="vignette" aria-hidden="true"></div>
+
+        <div class="stageHint">
+          <span class="badge2" id="assetHint" style="display:none;">Missing node image (check paths)</span>
+        </div>
+
+        <div class="nodes" id="nodes"></div>
+
+        <!-- Mission panel -->
+        <div class="mission" id="mission">
+          <h3 id="mTitle">Select a deployment</h3>
+          <div class="small" id="mDesc">Hover a node to preview. Click to select. Press Deploy to start.</div>
+
+          <div class="missionRow">
+            <div class="miniBadges" id="mBadges"></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+              <button class="btn" id="deployBtn" type="button" disabled>Deploy</button>
+            </div>
+          </div>
+
+          <div class="small" id="mLock" style="margin-top:8px; display:none;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toastWrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /************************************************************
+     * Unified Save (file:// safe) + compatibility (two keys)
+     ************************************************************/
+    const KEY_PRIMARY = "ICE_ROUNDUP_SAVE_V1";
+    const KEY_SECOND  = "PX_WAVE_SHOOTER_SAVE_V1";
+
+    function defaultSave(){
+      return {
+        unlockedLevel: 1,
+        coins: 0,
+        upgrades: {
+          gunLevel: 0,
+          tazerLevel: 0,
+          healthLevel: 0,
+          droneOwned: false,
+          robotOwned: false
+        }
+      };
+    }
+
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function clampInt(n, a, b){
+      n = Number.isFinite(n) ? Math.floor(n) : a;
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function normalizeSave(obj){
+      const s = defaultSave();
+      if(!obj || typeof obj !== "object") return s;
+
+      s.unlockedLevel = (typeof obj.unlockedLevel === "number") ? obj.unlockedLevel : s.unlockedLevel;
+      s.coins         = (typeof obj.coins === "number") ? obj.coins : s.coins;
+
+      const up = (obj.upgrades && typeof obj.upgrades === "object") ? obj.upgrades : {};
+
+      // migrate legacy keys if present (old map schema)
+      const legacyGun   = (typeof up.gun === "number") ? up.gun : 0;
+      const legacyTazer = (typeof up.tazer === "number") ? up.tazer : 0;
+      const legacyHP    = (typeof up.health === "number") ? up.health : 0;
+
+      s.upgrades.gunLevel    = (typeof up.gunLevel === "number") ? up.gunLevel : legacyGun;
+      s.upgrades.tazerLevel  = (typeof up.tazerLevel === "number") ? up.tazerLevel : legacyTazer;
+      s.upgrades.healthLevel = (typeof up.healthLevel === "number") ? up.healthLevel : legacyHP;
+
+      s.upgrades.droneOwned = (typeof up.droneOwned === "boolean") ? up.droneOwned : !!up.drone;
+      s.upgrades.robotOwned = (typeof up.robotOwned === "boolean") ? up.robotOwned : !!up.robot;
+
+      s.unlockedLevel = clampInt(s.unlockedLevel, 1, 5);
+      s.coins = Math.max(0, Math.floor(s.coins));
+
+      s.upgrades.gunLevel    = clampInt(s.upgrades.gunLevel, 0, 5);
+      s.upgrades.tazerLevel  = clampInt(s.upgrades.tazerLevel, 0, 5);
+      s.upgrades.healthLevel = clampInt(s.upgrades.healthLevel, 0, 5);
+
+      return s;
+    }
+
+    function loadFromKey(key){
+      const raw = localStorage.getItem(key);
+      if(!raw) return null;
+      return normalizeSave(safeParse(raw));
+    }
+
+    function mergeSaves(a, b){
+      if(!a && !b) return defaultSave();
+      if(a && !b) return a;
+      if(!a && b) return b;
+
+      const out = defaultSave();
+      out.unlockedLevel = Math.max(a.unlockedLevel, b.unlockedLevel);
+      out.coins = Math.max(a.coins, b.coins);
+
+      out.upgrades.gunLevel    = Math.max(a.upgrades.gunLevel, b.upgrades.gunLevel);
+      out.upgrades.tazerLevel  = Math.max(a.upgrades.tazerLevel, b.upgrades.tazerLevel);
+      out.upgrades.healthLevel = Math.max(a.upgrades.healthLevel, b.upgrades.healthLevel);
+      out.upgrades.droneOwned  = !!(a.upgrades.droneOwned || b.upgrades.droneOwned);
+      out.upgrades.robotOwned  = !!(a.upgrades.robotOwned || b.upgrades.robotOwned);
+      return out;
+    }
+
+    function loadSave(){
+      const s1 = loadFromKey(KEY_PRIMARY);
+      const s2 = loadFromKey(KEY_SECOND);
+      return mergeSaves(s1, s2);
+    }
+
+    function saveToKey(key, save){
+      try{ localStorage.setItem(key, JSON.stringify(save)); }catch{}
+    }
+
+    function saveSave(save){
+      saveToKey(KEY_PRIMARY, save);
+      saveToKey(KEY_SECOND, save);
+    }
+
+    /************************************************************
+     * Toast
+     ************************************************************/
+    const toastWrap = document.getElementById("toastWrap");
+    function toast(title, msg){
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.innerHTML = `<b>${title}</b><small>${msg}</small>`;
+      toastWrap.appendChild(el);
+      setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(-4px)"; }, 1900);
+      setTimeout(()=>{ el.remove(); }, 2500);
+    }
+
+    function fmt(n){ return (Math.floor(n)).toLocaleString(); }
+
+    /************************************************************
+     * Level data (fixed links: level.html?level=N)
+     ************************************************************/
+    const LEVELS = [
+      { level: 1, img: "assets/levels/Minneapolis/1.png", name: "Minneapolis", blurb: "Containment breach • urban sweep" },
+      { level: 2, img: "assets/levels/Dallas/1.png",      name: "Dallas",      blurb: "Highway interdiction • vehicle-heavy" },
+      { level: 3, img: "assets/levels/SanFran/1.png",     name: "San Fran",    blurb: "Dockyards lockdown • mixed hostiles" },
+      { level: 4, img: "assets/levels/DC/1.png",          name: "D.C.",        blurb: "Federal perimeter • elite response" },
+      { level: 5, img: "assets/levels/Miami/1.png",       name: "Miami",       blurb: "Night operation • rapid escalation" },
+    ];
+
+    const NODE_POSITIONS = {
+      1: { x: 54.5, y: 20.0 },
+      2: { x: 49.3, y: 73.5 },
+      3: { x: 7.9,  y: 39.5 },
+      4: { x: 85.8, y: 40.1 },
+      5: { x: 78.6, y: 83.8 }
+    };
+
+    /************************************************************
+     * Render nodes + mission panel
+     ************************************************************/
+    let save = loadSave();
+    saveSave(save); // persist migration/merge immediately
+
+    const coinsBadge = document.getElementById("coinsBadge");
+    const unlockBadge = document.getElementById("unlockBadge");
+    const nodesEl = document.getElementById("nodes");
+    const assetHint = document.getElementById("assetHint");
+
+    const mTitle = document.getElementById("mTitle");
+    const mDesc  = document.getElementById("mDesc");
+    const mBadges = document.getElementById("mBadges");
+    const mLock  = document.getElementById("mLock");
+    const deployBtn = document.getElementById("deployBtn");
+
+    let selectedLevel = null;
+
+    function updateHeader(){
+      coinsBadge.textContent = fmt(save.coins);
+      unlockBadge.textContent = `Unlocked: ${save.unlockedLevel}`;
+    }
+
+    function upgradeSummaryBadges(){
+      const up = save.upgrades;
+      const arr = [
+        `Gun Lv ${up.gunLevel}`,
+        `Tazer Lv ${up.tazerLevel}`,
+        `HP Lv ${up.healthLevel}`,
+        up.droneOwned ? "Drone" : null,
+        up.robotOwned ? "Robot" : null
+      ].filter(Boolean);
+
+      mBadges.innerHTML = "";
+      for(const t of arr){
+        const b = document.createElement("span");
+        b.className = "miniBadge";
+        b.textContent = t;
+        mBadges.appendChild(b);
+      }
+    }
+
+    function setMission(level){
+      const L = LEVELS.find(x => x.level === level);
+      if(!L) return;
+
+      selectedLevel = level;
+
+      const unlocked = level <= save.unlockedLevel;
+
+      mTitle.textContent = `Level ${L.level}: ${L.name}`;
+      mDesc.textContent  = L.blurb;
+
+      upgradeSummaryBadges();
+
+      if(unlocked){
+        mLock.style.display = "none";
+        deployBtn.disabled = false;
+        deployBtn.textContent = "Deploy";
+      }else{
+        mLock.style.display = "block";
+        mLock.className = "small missionLock";
+        mLock.textContent = `Locked — clear Level ${save.unlockedLevel} to unlock.`;
+        deployBtn.disabled = true;
+        deployBtn.textContent = "Locked";
+      }
+    }
+
+    function goLevel(level){
+      // unified link
+      window.location.href = `level.html?level=${encodeURIComponent(level)}`;
+    }
+
+    function buildNodes(){
+      nodesEl.innerHTML = "";
+
+      for(const L of LEVELS){
+        const unlocked = L.level <= save.unlockedLevel;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "node" + (unlocked ? "" : " locked");
+        btn.dataset.level = String(L.level);
+
+        const pos = NODE_POSITIONS[L.level] || { x: 50, y: 50 };
+        btn.style.left = `${pos.x}%`;
+        btn.style.top  = `${pos.y}%`;
+
+        btn.innerHTML = `
+          <div class="nodeTip">Level ${L.level} <small>• ${L.name}</small></div>
+          <img alt="Level ${L.level} - ${L.name}" src="${L.img}">
+        `;
+
+        btn.addEventListener("mouseenter", ()=>{
+          // preview on hover without committing selection
+          setMission(L.level);
+        });
+
+        btn.addEventListener("click", ()=>{
+          setMission(L.level);
+          if(!unlocked){
+            toast("Locked", `Clear Level ${save.unlockedLevel} to unlock Level ${L.level}.`);
+            return;
+          }
+        });
+
+        btn.addEventListener("dblclick", ()=>{
+          if(!unlocked) return;
+          goLevel(L.level);
+        });
+
+        const img = btn.querySelector("img");
+        img.addEventListener("error", ()=>{
+          assetHint.style.display = "inline-flex";
+          img.style.display = "none";
+          btn.style.background = "rgba(12,16,22,0.85)";
+        });
+
+        nodesEl.appendChild(btn);
+      }
+    }
+
+    deployBtn.addEventListener("click", ()=>{
+      if(!selectedLevel) return;
+      const unlocked = selectedLevel <= save.unlockedLevel;
+      if(!unlocked) return;
+      goLevel(selectedLevel);
+    });
+
+    // Boot
+    updateHeader();
+    buildNodes();
+
+    // default selection = highest unlocked
+    setMission(save.unlockedLevel);
+
+    // If another page changes save while map is open, refresh periodically
+    setInterval(()=>{
+      const latest = loadSave();
+      const changed = JSON.stringify(latest) !== JSON.stringify(save);
+      if(changed){
+        save = latest;
+        updateHeader();
+        buildNodes();
+        if(selectedLevel) setMission(selectedLevel);
+      }
+    }, 1200);
+  </script>
+</body>
+</html>

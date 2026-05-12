@@ -1,0 +1,666 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Upgrades - ICE Roundup</title>
+  <link rel="stylesheet" href="styles.css"/>
+
+  <style>
+    /* Small, page-local enhancements (keeps your global styles.css intact) */
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width: 900px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .pillrow{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 13px;
+      user-select:none;
+    }
+    .pill small{ opacity:.78; font-weight:700; }
+    .muted{ opacity:.75; }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    @media (max-width: 520px){
+      .kpi{ grid-template-columns: 1fr; }
+    }
+    .kpi .card{ padding:12px; }
+    .kpi .val{ font-size: 18px; font-weight: 950; letter-spacing: .2px; }
+    .kpi .lbl{ font-size: 12px; opacity:.75; font-weight: 800; }
+
+    .shopItem{
+      padding: 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+    }
+    .shopLeft{ min-width: 0; }
+    .shopTitle{
+      font-weight: 950;
+      letter-spacing: .2px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .shopDesc{ margin-top:3px; }
+    .shopMeta{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .bar{
+      width: 220px;
+      max-width: 42vw;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.08);
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: rgba(120,170,255,0.85);
+      box-shadow: 0 0 18px rgba(120,170,255,0.25);
+    }
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      min-width: 170px;
+    }
+    .actionsRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn.smallBtn{
+      padding: 8px 10px;
+      font-size: 13px;
+      border-radius: 10px;
+    }
+
+    /* Toast */
+    .toastWrap{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 9999;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:none;
+      width: min(360px, calc(100vw - 28px));
+      background: rgba(18,26,34,0.92);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .toast b{ display:block; font-weight: 950; }
+    .toast small{ opacity:.8; font-weight: 700; }
+
+    details summary{
+      cursor: pointer;
+      user-select:none;
+      font-weight: 900;
+    }
+
+    .danger{
+      border-color: rgba(255,90,90,0.35) !important;
+      background: rgba(255,90,90,0.10) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+
+      <div class="row" style="align-items:center;">
+        <div class="col">
+          <h1>Upgrades</h1>
+          <p class="muted">Spend coins to improve survivability and add support units. Changes apply the next time you start a level.</p>
+
+          <div class="pillrow" style="margin-top:10px;">
+            <span class="pill" id="coinsPill">Coins: 0</span>
+            <span class="pill" id="unlockedPill">Unlocked: Level 1</span>
+          </div>
+
+          <div class="kpi" id="kpiPanel">
+            <!-- filled by JS -->
+          </div>
+        </div>
+
+        <div class="col" style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+          <a class="btn" href="map.html">Back to Map</a>
+          <button class="btn danger" id="resetBtn" type="button" title="Refund some coins and reset upgrades">Reset Upgrades</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2>Stats Upgrades</h2>
+          <div id="shopStats" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
+        </div>
+
+        <div class="card">
+          <h2>Support Units</h2>
+          <p class="small">
+            Drone: auto-tazes foot enemies only.<br/>
+            Humanoid Robot: uses both (gun vs vehicles, tazer vs foot).
+          </p>
+          <div id="shopUnits" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
+
+          <div class="hr"></div>
+
+          <details>
+            <summary>Economy notes</summary>
+            <p class="small" style="margin-top:8px;">
+              Coins are earned at the end of each level based on score + a clear bonus.
+              This shop is designed so early upgrades are cheap, but maxing everything takes time.
+            </p>
+          </details>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="card">
+        <h3>How coins work</h3>
+        <p class="small">
+          You earn coins at the end of each level based on your score (and some bonus for clearing).
+          This is a simple economy we can rebalance later.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toastWrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /************************************************************
+     * SAVE (File:// safe) + Compatibility Layer
+     ************************************************************/
+    const KEY_PRIMARY = "ICE_ROUNDUP_SAVE_V1";      // used by map.html / level.html
+    const KEY_SECOND  = "PX_WAVE_SHOOTER_SAVE_V1";  // used by common.js (index/upgrades in older build)
+
+    function defaultSave(){
+      return {
+        unlockedLevel: 1,
+        coins: 0,
+        upgrades: {
+          gunLevel: 0,
+          tazerLevel: 0,
+          healthLevel: 0,
+          droneOwned: false,
+          robotOwned: false
+        }
+      };
+    }
+
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function normalizeSave(obj){
+      const s = defaultSave();
+
+      if(!obj || typeof obj !== "object") return s;
+
+      // top-level
+      s.unlockedLevel = (typeof obj.unlockedLevel === "number") ? obj.unlockedLevel : s.unlockedLevel;
+      s.coins         = (typeof obj.coins === "number") ? obj.coins : s.coins;
+
+      // upgrades object
+      const up = (obj.upgrades && typeof obj.upgrades === "object") ? obj.upgrades : {};
+
+      // migrate legacy keys (map.html old schema)
+      const legacyGun   = (typeof up.gun === "number") ? up.gun : 0;
+      const legacyTazer = (typeof up.tazer === "number") ? up.tazer : 0;
+      const legacyHP    = (typeof up.health === "number") ? up.health : 0;
+
+      s.upgrades.gunLevel    = (typeof up.gunLevel === "number") ? up.gunLevel : legacyGun;
+      s.upgrades.tazerLevel  = (typeof up.tazerLevel === "number") ? up.tazerLevel : legacyTazer;
+      s.upgrades.healthLevel = (typeof up.healthLevel === "number") ? up.healthLevel : legacyHP;
+
+      s.upgrades.droneOwned = (typeof up.droneOwned === "boolean") ? up.droneOwned : !!up.drone;
+      s.upgrades.robotOwned = (typeof up.robotOwned === "boolean") ? up.robotOwned : !!up.robot;
+
+      // clamps
+      s.unlockedLevel = clampInt(s.unlockedLevel, 1, 5);
+      s.coins = Math.max(0, Math.floor(s.coins));
+
+      s.upgrades.gunLevel    = clampInt(s.upgrades.gunLevel, 0, 5);
+      s.upgrades.tazerLevel  = clampInt(s.upgrades.tazerLevel, 0, 5);
+      s.upgrades.healthLevel = clampInt(s.upgrades.healthLevel, 0, 5);
+
+      return s;
+    }
+
+    function loadFromKey(key){
+      const raw = localStorage.getItem(key);
+      if(!raw) return null;
+      return normalizeSave(safeParse(raw));
+    }
+
+    function mergeSaves(a, b){
+      // Prefer whichever looks "more progressed"; merge in a safe way.
+      if(!a && !b) return defaultSave();
+      if(a && !b) return a;
+      if(!a && b) return b;
+
+      const out = defaultSave();
+      out.unlockedLevel = Math.max(a.unlockedLevel, b.unlockedLevel);
+
+      // coins: take the larger (avoids accidental doubling)
+      out.coins = Math.max(a.coins, b.coins);
+
+      // upgrades: take the best of each
+      out.upgrades.gunLevel    = Math.max(a.upgrades.gunLevel, b.upgrades.gunLevel);
+      out.upgrades.tazerLevel  = Math.max(a.upgrades.tazerLevel, b.upgrades.tazerLevel);
+      out.upgrades.healthLevel = Math.max(a.upgrades.healthLevel, b.upgrades.healthLevel);
+      out.upgrades.droneOwned  = !!(a.upgrades.droneOwned || b.upgrades.droneOwned);
+      out.upgrades.robotOwned  = !!(a.upgrades.robotOwned || b.upgrades.robotOwned);
+      return out;
+    }
+
+    function loadSave(){
+      const s1 = loadFromKey(KEY_PRIMARY);
+      const s2 = loadFromKey(KEY_SECOND);
+      const merged = mergeSaves(s1, s2);
+      return merged;
+    }
+
+    function saveToKey(key, save){
+      try{ localStorage.setItem(key, JSON.stringify(save)); }catch{}
+    }
+
+    function saveSave(save){
+      // write to BOTH keys so every page sees the same progress
+      saveToKey(KEY_PRIMARY, save);
+      saveToKey(KEY_SECOND, save);
+    }
+
+    function clampInt(n, a, b){
+      n = Number.isFinite(n) ? Math.floor(n) : a;
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function fmt(n){
+      return (Math.floor(n)).toLocaleString();
+    }
+
+    /************************************************************
+     * UI helpers
+     ************************************************************/
+    const toastWrap = document.getElementById("toastWrap");
+    function toast(title, msg){
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.innerHTML = `<b>${title}</b><small>${msg}</small>`;
+      toastWrap.appendChild(el);
+      setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(-4px)"; }, 1900);
+      setTimeout(()=>{ el.remove(); }, 2500);
+    }
+
+    function makeBar(pct){
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      const fill = document.createElement("i");
+      fill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+      bar.appendChild(fill);
+      return bar;
+    }
+
+    function calcAffordableLevels(currentLevel, maxLevel, coins, costFn){
+      let lvl = currentLevel;
+      let c = coins;
+      let bought = 0;
+      while(lvl < maxLevel){
+        const price = costFn(lvl);
+        if(c < price) break;
+        c -= price;
+        lvl += 1;
+        bought += 1;
+      }
+      return bought; // number of levels you can buy right now
+    }
+
+    /************************************************************
+     * Game-consistent stat math (matches level.html)
+     ************************************************************/
+    function playerStatsFromUpgrades(up){
+      const hp = 100 + up.healthLevel * 20;
+      const gunDamage = 22 + up.gunLevel * 8;
+      const tazerRange = 70 + up.tazerLevel * 10;
+      const tazerStun = 0.45 + up.tazerLevel * 0.08;
+      const tazerDamage = 28 + up.tazerLevel * 6;
+      return { hp, gunDamage, tazerRange, tazerStun, tazerDamage };
+    }
+
+    /************************************************************
+     * Shop data
+     ************************************************************/
+    const statItems = [
+      {
+        key: "gunLevel",
+        name: "Gun Upgrade",
+        desc: "More damage vs vehicles",
+        max: 5,
+        cost: (lvl)=> 60 + lvl*50,
+        effectText: (up)=> {
+          const now = playerStatsFromUpgrades(up).gunDamage;
+          const next = playerStatsFromUpgrades({ ...up, gunLevel: Math.min(5, up.gunLevel+1) }).gunDamage;
+          return `Damage: ${now} → ${next}`;
+        }
+      },
+      {
+        key: "tazerLevel",
+        name: "Tazer Upgrade",
+        desc: "More range + stronger stun vs foot",
+        max: 5,
+        cost: (lvl)=> 60 + lvl*50,
+        effectText: (up)=> {
+          const a = playerStatsFromUpgrades(up);
+          const b = playerStatsFromUpgrades({ ...up, tazerLevel: Math.min(5, up.tazerLevel+1) });
+          return `Range: ${a.tazerRange} → ${b.tazerRange} • Stun: ${a.tazerStun.toFixed(2)}s → ${b.tazerStun.toFixed(2)}s • Zap: ${a.tazerDamage} → ${b.tazerDamage}`;
+        }
+      },
+      {
+        key: "healthLevel",
+        name: "Health Upgrade",
+        desc: "Increase max HP",
+        max: 5,
+        cost: (lvl)=> 80 + lvl*60,
+        effectText: (up)=> {
+          const now = playerStatsFromUpgrades(up).hp;
+          const next = playerStatsFromUpgrades({ ...up, healthLevel: Math.min(5, up.healthLevel+1) }).hp;
+          return `Max HP: ${now} → ${next}`;
+        }
+      }
+    ];
+
+    const unitItems = [
+      {
+        key: "droneOwned",
+        name: "Drone",
+        desc: "Auto taze foot enemies",
+        cost: 250
+      },
+      {
+        key: "robotOwned",
+        name: "Humanoid Robot",
+        desc: "Auto taze foot + shoot vehicles",
+        cost: 450
+      }
+    ];
+
+    /************************************************************
+     * Render
+     ************************************************************/
+    const coinsPill = document.getElementById("coinsPill");
+    const unlockedPill = document.getElementById("unlockedPill");
+    const kpiPanel = document.getElementById("kpiPanel");
+
+    const shopStats = document.getElementById("shopStats");
+    const shopUnits = document.getElementById("shopUnits");
+
+    const resetBtn = document.getElementById("resetBtn");
+
+    let save = loadSave();
+    // persist merged save immediately so pages align
+    saveSave(save);
+
+    function renderKPIs(){
+      const up = save.upgrades;
+      const s = playerStatsFromUpgrades(up);
+
+      kpiPanel.innerHTML = "";
+
+      const cards = [
+        { lbl: "Max HP", val: s.hp },
+        { lbl: "Gun Damage", val: s.gunDamage },
+        { lbl: "Tazer Range", val: s.tazerRange },
+        { lbl: "Tazer Stun (sec)", val: s.tazerStun.toFixed(2) }
+      ];
+
+      for(const c of cards){
+        const el = document.createElement("div");
+        el.className = "card";
+        el.innerHTML = `
+          <div class="val">${c.val}</div>
+          <div class="lbl">${c.lbl}</div>
+        `;
+        kpiPanel.appendChild(el);
+      }
+    }
+
+    function renderStatsShop(){
+      shopStats.innerHTML = "";
+
+      for(const item of statItems){
+        const lvl = save.upgrades[item.key];
+        const atMax = lvl >= item.max;
+
+        const price = atMax ? null : item.cost(lvl);
+        const canBuy1 = !atMax && save.coins >= price;
+
+        const affordableCount = atMax ? 0 : calcAffordableLevels(lvl, item.max, save.coins, item.cost);
+        const canBuyMax = affordableCount > 0;
+
+        const pct = (lvl / item.max) * 100;
+
+        const el = document.createElement("div");
+        el.className = "card shopItem";
+
+        const left = document.createElement("div");
+        left.className = "shopLeft";
+        left.innerHTML = `
+          <div class="shopTitle">
+            ${item.name}
+            <span class="badge">Lv ${lvl}/${item.max}</span>
+          </div>
+          <div class="small shopDesc">${item.desc}</div>
+          <div class="small shopDesc" style="margin-top:6px; font-weight:850; opacity:.9;">
+            ${atMax ? "Maxed out." : item.effectText(save.upgrades)}
+          </div>
+        `;
+
+        const meta = document.createElement("div");
+        meta.className = "shopMeta";
+        meta.appendChild(makeBar(pct));
+
+        const priceTag = document.createElement("span");
+        priceTag.className = "badge";
+        priceTag.textContent = atMax ? "—" : `Next: ${fmt(price)} coins`;
+        meta.appendChild(priceTag);
+
+        left.appendChild(meta);
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const row = document.createElement("div");
+        row.className = "actionsRow";
+
+        const buy1 = document.createElement("button");
+        buy1.type = "button";
+        buy1.className = "btn smallBtn " + (canBuy1 ? "primary" : "");
+        buy1.disabled = !canBuy1;
+        buy1.textContent = atMax ? "Maxed" : `Buy +1 (${fmt(price)})`;
+
+        const buyMax = document.createElement("button");
+        buyMax.type = "button";
+        buyMax.className = "btn smallBtn " + (canBuyMax ? "" : "");
+        buyMax.disabled = !canBuyMax;
+        buyMax.textContent = canBuyMax ? `Buy Max (+${affordableCount})` : "Buy Max";
+
+        buy1.addEventListener("click", ()=>{
+          if(!canBuy1) return;
+          save.coins -= price;
+          save.upgrades[item.key] = clampInt(save.upgrades[item.key] + 1, 0, item.max);
+          saveSave(save);
+          toast("Purchased", `${item.name} → Lv ${save.upgrades[item.key]}/${item.max}`);
+          render();
+        });
+
+        buyMax.addEventListener("click", ()=>{
+          if(!canBuyMax) return;
+          let bought = 0;
+          while(save.upgrades[item.key] < item.max){
+            const p = item.cost(save.upgrades[item.key]);
+            if(save.coins < p) break;
+            save.coins -= p;
+            save.upgrades[item.key] += 1;
+            bought += 1;
+          }
+          saveSave(save);
+          toast("Purchased", `${item.name}: +${bought} level(s)`);
+          render();
+        });
+
+        row.appendChild(buy1);
+        row.appendChild(buyMax);
+        actions.appendChild(row);
+
+        el.appendChild(left);
+        el.appendChild(actions);
+        shopStats.appendChild(el);
+      }
+    }
+
+    function renderUnitsShop(){
+      shopUnits.innerHTML = "";
+
+      for(const item of unitItems){
+        const owned = !!save.upgrades[item.key];
+        const canBuy = !owned && save.coins >= item.cost;
+
+        const el = document.createElement("div");
+        el.className = "card shopItem";
+
+        const left = document.createElement("div");
+        left.className = "shopLeft";
+        left.innerHTML = `
+          <div class="shopTitle">
+            ${item.name}
+            ${owned ? `<span class="badge">Owned</span>` : ""}
+          </div>
+          <div class="small shopDesc">${item.desc}</div>
+          <div class="shopMeta">
+            <span class="badge">${owned ? "Installed" : `Cost: ${fmt(item.cost)} coins`}</span>
+          </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn smallBtn " + (canBuy ? "primary" : "");
+        btn.disabled = !canBuy;
+        btn.textContent = owned ? "Owned" : `Buy (${fmt(item.cost)})`;
+
+        btn.addEventListener("click", ()=>{
+          if(!canBuy) return;
+          save.coins -= item.cost;
+          save.upgrades[item.key] = true;
+          saveSave(save);
+          toast("Purchased", `${item.name} installed`);
+          render();
+        });
+
+        actions.appendChild(btn);
+
+        el.appendChild(left);
+        el.appendChild(actions);
+        shopUnits.appendChild(el);
+      }
+    }
+
+    function renderTop(){
+      coinsPill.textContent = `Coins: ${fmt(save.coins)}`;
+      unlockedPill.textContent = `Unlocked: Level ${save.unlockedLevel}`;
+    }
+
+    function render(){
+      // reload (in case another tab changed things)
+      save = loadSave();
+      renderTop();
+      renderKPIs();
+      renderStatsShop();
+      renderUnitsShop();
+    }
+
+    /************************************************************
+     * Reset / Respec
+     ************************************************************/
+    resetBtn.addEventListener("click", ()=>{
+      const REFUND_RATE = 0.60; // 60% refund (tune later)
+
+      // compute spent coins based on current levels + owned units
+      // Stat prices are incremental (price depends on current level BEFORE buying).
+      let spent = 0;
+
+      // gun
+      for(let i=0;i<save.upgrades.gunLevel;i++) spent += (60 + i*50);
+      // tazer
+      for(let i=0;i<save.upgrades.tazerLevel;i++) spent += (60 + i*50);
+      // health
+      for(let i=0;i<save.upgrades.healthLevel;i++) spent += (80 + i*60);
+
+      if(save.upgrades.droneOwned) spent += 250;
+      if(save.upgrades.robotOwned) spent += 450;
+
+      const refund = Math.floor(spent * REFUND_RATE);
+
+      const msg =
+        `This will reset upgrades and refund ${fmt(refund)} coins (${Math.round(REFUND_RATE*100)}% of ${fmt(spent)}).`;
+
+      if(!confirm(msg)) return;
+
+      save.coins += refund;
+      save.upgrades.gunLevel = 0;
+      save.upgrades.tazerLevel = 0;
+      save.upgrades.healthLevel = 0;
+      save.upgrades.droneOwned = false;
+      save.upgrades.robotOwned = false;
+
+      saveSave(save);
+      toast("Reset complete", `Refunded ${fmt(refund)} coins`);
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

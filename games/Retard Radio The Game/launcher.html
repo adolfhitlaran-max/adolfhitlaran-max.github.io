@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Agartha - Launcher</title>
+  <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+</head>
+<body class="menu-page launcher-page">
+  <main class="launcher-shell">
+    <section class="launcher-hero" aria-labelledby="launcherTitle">
+      <div class="hero-copy">
+        <span class="eyebrow">Campaign Command</span>
+        <h1 id="launcherTitle">Road to Agartha</h1>
+        <p>Wake the convoy, cross the broken route, and keep Ashtar alive long enough to turn every ruin into a signal.</p>
+        <div class="launcher-actions" aria-label="Launcher actions">
+          <a id="continueBtn" class="menu-button primary" href="video.html?src=assets/videos/1.mp4&next=prelevel.html">Continue</a>
+          <a id="startCampaignBtn" class="menu-button" href="video.html?src=assets/videos/1.mp4&next=prelevel.html">New Run</a>
+          <a class="menu-button" href="map.html">Level Map</a>
+          <a class="menu-button ghost" href="index.html">Training Hold</a>
+        </div>
+        <div class="launcher-briefing" aria-label="Campaign briefing">
+          <div><span>First Stand</span><strong>Crash Site</strong></div>
+          <div><span>Current Ally</span><strong>Ashtar</strong></div>
+          <div><span>Active Threat</span><strong>Dead Road</strong></div>
+        </div>
+      </div>
+
+      <div class="launcher-showcase" aria-hidden="true">
+        <img class="showcase-map" src="assets/backgrounds/level1map.png" alt="" />
+        <img class="showcase-genz" src="assets/player/genz/idle/1.png" alt="" />
+        <img class="showcase-ashtar" src="assets/ashtar/carrying/1.png" alt="" />
+        <div class="showcase-scanline"></div>
+      </div>
+
+      <div class="mission-panel" aria-label="Current operation">
+        <div class="panel-header">
+          <span>Active Save</span>
+          <strong id="activePlayerName">Player 1</strong>
+        </div>
+        <div class="player-save-tools">
+          <span id="activePlayerProgress">Level 1 unlocked</span>
+          <div class="save-slots" id="saveSlots" aria-label="Save slots"></div>
+          <label>
+            Player Name
+            <input id="playerNameInput" type="text" maxlength="24" value="Player 1" />
+          </label>
+          <div class="save-actions">
+            <button id="renameSaveBtn" type="button">Rename</button>
+            <button id="resetSaveBtn" type="button">Reset</button>
+          </div>
+        </div>
+        <div class="signal-list">
+          <div><span>Convoy</span><strong>Cold Start</strong></div>
+          <div><span>Supply Drops</span><strong>Armed</strong></div>
+          <div><span>Map Signal</span><strong>Tracking</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="launcher-route-preview" aria-label="Route overview">
+      <a href="index.html?level=1" data-level="1">
+        <img src="assets/backgrounds/level1.png" alt="" />
+        <span>01</span>
+        <strong>Crash Site</strong>
+      </a>
+      <a href="level2.html" data-level="2">
+        <img src="assets/backgrounds/level2.png" alt="" />
+        <span>02</span>
+        <strong>Salvage</strong>
+      </a>
+      <a href="index.html?level=3" data-level="3">
+        <img src="assets/backgrounds/level3.png" alt="" />
+        <span>03</span>
+        <strong>Home Run</strong>
+      </a>
+      <a href="index.html?level=4" data-level="4">
+        <img src="assets/backgrounds/level4.png" alt="" />
+        <span>04</span>
+        <strong>On The Road</strong>
+      </a>
+    </section>
+  </main>
+  <script src="scripts/save-system.js"></script>
+  <script src="scripts/launcher-save.js?v=menu-overhaul-11"></script>
+</body>
+</html>

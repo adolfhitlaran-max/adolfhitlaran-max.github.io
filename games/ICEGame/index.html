@@ -1,0 +1,678 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ICE Roundup</title>
+  <link rel="stylesheet" href="styles.css"/>
+
+  <style>
+    html, body { height: 100%; }
+    body{ margin:0; overflow:hidden; background:#05070a; }
+
+    /* Fullscreen background image */
+    .bg{
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(1200px 800px at 70% 30%, rgba(85,214,190,0.20), transparent 55%),
+        radial-gradient(900px 700px at 25% 70%, rgba(120,170,255,0.14), transparent 55%),
+        linear-gradient(180deg, rgba(5,7,10,0.20), rgba(5,7,10,0.88)),
+        url("assets/background/launcher.png");
+      background-size: cover;
+      background-position: center;
+      transform: scale(1.02);
+      filter: saturate(1.05) contrast(1.04);
+    }
+
+    .vignette{
+      position:fixed; inset:-2px; pointer-events:none;
+      background: radial-gradient(closest-side at 50% 50%, transparent 55%, rgba(0,0,0,0.62) 100%);
+      mix-blend-mode: multiply; opacity: 0.95;
+    }
+
+    .grain{
+      position:fixed; inset:0; pointer-events:none; opacity:0.10;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      background-size: 240px 240px;
+      animation: grainMove 5.5s steps(10) infinite;
+    }
+    @keyframes grainMove{
+      0%{ transform: translate(0,0); }
+      20%{ transform: translate(-10px, 8px); }
+      40%{ transform: translate(12px, -6px); }
+      60%{ transform: translate(-6px, -10px); }
+      80%{ transform: translate(10px, 6px); }
+      100%{ transform: translate(0,0); }
+    }
+
+    .scanlines{
+      position:fixed; inset:0; pointer-events:none; opacity:0.10;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.0) 0px,
+        rgba(0,0,0,0.0) 2px,
+        rgba(0,0,0,0.35) 3px
+      );
+      mix-blend-mode: overlay;
+    }
+
+    /* 16:9 stage */
+    .stage-wrap{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      padding: min(3vw, 28px);
+    }
+    .stage{
+      width: min(96vw, calc(96vh * (16/9)));
+      height: min(96vh, calc(96vw * (9/16)));
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(10,14,20,0.74);
+      box-shadow: 0 30px 100px rgba(0,0,0,0.65);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      overflow:hidden;
+      position:relative;
+      display:flex; flex-direction:column;
+      animation: popIn 520ms cubic-bezier(.2,.9,.2,1) 1;
+    }
+    @keyframes popIn{
+      0%{ transform: translateY(14px) scale(0.985); opacity: 0; }
+      100%{ transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .stage::before{
+      content:"";
+      position:absolute; inset:0; pointer-events:none;
+      background:
+        linear-gradient(90deg, rgba(85,214,190,0.18), transparent 35%),
+        radial-gradient(600px 300px at 25% 20%, rgba(120,170,255,0.14), transparent 65%),
+        radial-gradient(700px 400px at 80% 80%, rgba(85,214,190,0.10), transparent 70%);
+      opacity:0.95;
+    }
+
+    .topbar{
+      position:relative; z-index:2;
+      padding: 18px 18px 0 18px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px; flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex; align-items:center; gap: 12px;
+      min-width: 300px;
+    }
+
+    /* Badge/insignia */
+    .crest{
+      width: 52px; height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+      display:grid; place-items:center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .crest::after{
+      content:"";
+      position:absolute; inset:-30%;
+      background: radial-gradient(circle at 50% 50%, rgba(120,170,255,0.35), transparent 60%);
+      transform: rotate(18deg);
+      opacity: 0.9;
+    }
+    .crest .mark{
+      width: 24px; height: 24px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, rgba(120,170,255,1) 50%, rgba(85,214,190,1) 50%);
+      box-shadow:
+        0 0 0 2px rgba(0,0,0,0.35) inset,
+        0 0 18px rgba(120,170,255,0.22);
+      image-rendering: pixelated;
+      position:relative;
+      z-index:1;
+    }
+
+    .title{ line-height:1.05; }
+    .title h1{
+      margin:0;
+      font-size: clamp(28px, 3.4vw, 48px);
+      letter-spacing: 0.6px;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .title .sub{
+      margin-top:6px;
+      color: rgba(232,238,247,0.72);
+      font-weight:750;
+      font-size: 13px;
+      letter-spacing: 0.25px;
+      text-transform: uppercase;
+    }
+
+    .statusRow{
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center; justify-content:flex-end;
+    }
+    .badge2{
+      display:inline-flex; gap:8px; align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.06);
+      color: rgba(232,238,247,0.80);
+      font-weight: 850;
+      font-size: 13px;
+      user-select:none;
+    }
+    .dot{
+      width:8px; height:8px; border-radius:99px;
+      background: rgba(120,170,255,0.95);
+      box-shadow: 0 0 0 3px rgba(120,170,255,0.18);
+    }
+
+    .content{
+      position:relative; z-index:2;
+      display:grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 16px;
+      padding: 16px 18px 18px 18px;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 920px){
+      .content{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.22);
+      padding: 14px;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .hero{
+      display:flex;
+      flex-direction:column;
+      gap: 12px;
+      height:100%;
+    }
+
+    .tagline{
+      margin: 0;
+      font-size: clamp(14px, 1.6vw, 16px);
+      color: rgba(232,238,247,0.80);
+      line-height: 1.55;
+    }
+
+    .pillRow{
+      display:flex; flex-wrap:wrap; gap:10px;
+      margin-top: 4px;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: rgba(232,238,247,0.76);
+      font-weight: 750;
+      font-size: 12px;
+    }
+
+    .kbd2{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.06);
+      color: rgba(232,238,247,0.92);
+    }
+
+    .actions{
+      display:flex; flex-direction:column; gap: 10px;
+    }
+
+    .bigBtn{
+      padding: 14px 14px;
+      border-radius: 16px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap: 12px;
+      width: 100%;
+    }
+    .bigBtn .left{
+      display:flex; flex-direction:column;
+      align-items:flex-start; gap: 4px;
+    }
+    .bigBtn .left b{
+      font-size: 15px; letter-spacing: 0.2px;
+    }
+    .bigBtn .left span{
+      font-size: 12px;
+      color: rgba(232,238,247,0.70);
+      font-weight: 700;
+    }
+
+    .chev{
+      opacity: 0.78;
+      font-weight: 1000;
+      transform: translateX(0);
+      transition: transform 140ms ease;
+    }
+    .bigBtn:hover .chev{ transform: translateX(3px); }
+
+    .divider{
+      height:1px;
+      background: rgba(255,255,255,0.10);
+      margin: 10px 0;
+    }
+
+    .miniFooter{
+      margin-top:auto;
+      display:flex; justify-content:space-between;
+      align-items:center; gap: 10px;
+      flex-wrap:wrap;
+      padding-top: 6px;
+      color: rgba(232,238,247,0.58);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.68);
+      display:none;
+      place-items:center;
+      padding: 18px;
+      z-index: 999;
+    }
+    .modal{
+      width: min(720px, 96vw);
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(12,16,22,0.92);
+      box-shadow: 0 30px 100px rgba(0,0,0,0.7);
+      padding: 14px;
+    }
+    .modal h2{ margin: 6px 6px 10px 6px; }
+    .modal p{ margin: 0 6px 10px 6px; color: rgba(232,238,247,0.72); }
+    .modal .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 6px;
+    }
+    @media (max-width: 680px){
+      .modal .grid2{ grid-template-columns: 1fr; }
+    }
+    .modal .card2{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+    }
+    .modal .card2 b{ display:block; margin-bottom: 6px; }
+    .modal .closeRow{
+      display:flex; justify-content:flex-end;
+      gap:10px; padding: 6px;
+    }
+
+    /* A subtle “terminal” line */
+    .opsline{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.18);
+      color: rgba(232,238,247,0.76);
+    }
+    .opsline b{ color: rgba(120,170,255,0.95); }
+
+    /* Tiny helper toast */
+    .toastWrap{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 9999;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:none;
+      width: min(360px, calc(100vw - 28px));
+      background: rgba(18,26,34,0.92);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.55);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .toast b{ display:block; font-weight: 950; }
+    .toast small{ opacity:.8; font-weight: 700; }
+  </style>
+</head>
+
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="stage-wrap">
+    <div class="stage" role="application" aria-label="Launcher">
+      <div class="topbar">
+        <div class="brand">
+          <div class="crest" aria-hidden="true"><div class="mark"></div></div>
+          <div class="title">
+            <h1>ICE Roundup</h1>
+            <div class="sub">Field Ops • Intercept Smugglers • Secure the Zone</div>
+          </div>
+        </div>
+
+        <div class="statusRow">
+          <div class="badge2"><span class="dot"></span><span id="statusUnlock">Unlocked: 1</span></div>
+          <div class="badge2">Coins: <span id="statusCoins">0</span></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="panel hero">
+          <p class="tagline">
+            You’re a field agent holding the perimeter while your team collects contraband evidence off-screen.
+            <b>Tazer</b> is for <b>foot runners</b>. <b>Gun</b> is for <b>getaway vehicles</b>.
+            Use the wrong tool and your score takes a hit.
+          </p>
+
+          <div class="opsline">
+            <b>OPS BRIEF:</b> 3 waves per level • 2:00 each • Spawns stop at time-out — clear remaining hostiles to advance.
+          </div>
+
+          <div class="pillRow">
+            <div class="pill"><span class="kbd2">WASD</span> Move</div>
+            <div class="pill"><span class="kbd2">Mouse</span> Aim</div>
+            <div class="pill"><span class="kbd2">LMB</span> Use tool</div>
+            <div class="pill"><span class="kbd2">1</span> Tazer</div>
+            <div class="pill"><span class="kbd2">2</span> Gun</div>
+            <div class="pill"><span class="kbd2">P</span> Pause</div>
+          </div>
+
+          <div class="miniFooter">
+            <span id="statusHint">Tip: Tazer doesn’t work on vehicles. Gun on foot = penalty.</span>
+            <span>16:9 stage • scales to window</span>
+          </div>
+        </div>
+
+        <div class="panel actions">
+          <button id="continueBtn" class="btn primary bigBtn" type="button">
+            <div class="left">
+              <b>Continue Operation</b>
+              <span id="continueSub">Jump back in</span>
+            </div>
+            <div class="chev">›</div>
+          </button>
+
+          <a class="btn primary bigBtn" href="map.html">
+            <div class="left">
+              <b>Deploy / Level Select</b>
+              <span>Open operational map</span>
+            </div>
+            <div class="chev">›</div>
+          </a>
+
+          <a class="btn bigBtn" href="upgrades.html">
+            <div class="left">
+              <b>Armory & Upgrades</b>
+              <span>Weapons • Health • Drone • Robot</span>
+            </div>
+            <div class="chev">›</div>
+          </a>
+
+          <button id="howBtn" class="btn bigBtn" type="button">
+            <div class="left">
+              <b>Rules of Engagement</b>
+              <span>Tools & scoring</span>
+            </div>
+            <div class="chev">›</div>
+          </button>
+
+          <div class="divider"></div>
+
+          <button id="resetBtn" class="btn danger bigBtn" type="button">
+            <div class="left">
+              <b>Wipe Records (Reset)</b>
+              <span>Clears unlocks + upgrades</span>
+            </div>
+            <div class="chev">›</div>
+          </button>
+
+          <div style="margin-top:auto; opacity:.85;">
+            <div class="small">
+              Background: <code>assets/background/launcher.png</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalBack" class="modalBack" role="dialog" aria-modal="true" aria-label="Rules of Engagement">
+    <div class="modal">
+      <h2>Rules of Engagement</h2>
+      <p>
+        Your team is collecting evidence off-screen. Each wave lasts <b>2 minutes</b>. When the timer hits zero,
+        spawns stop — clear remaining hostiles to move forward.
+      </p>
+
+      <div class="grid2">
+        <div class="card2">
+          <b>Foot Runners</b>
+          Use the <b>Tazer</b> to stun and stop them.
+        </div>
+        <div class="card2">
+          <b>Getaway Vehicles</b>
+          Use the <b>Gun</b> to disable vehicles. (Tazer won’t work.)
+        </div>
+        <div class="card2">
+          <b>Score Rules</b>
+          Vehicle takedowns score higher. Using gun on foot = <b>score penalty</b>.
+        </div>
+        <div class="card2">
+          <b>Support Units</b>
+          Drone tazes foot only. Humanoid robot handles both.
+        </div>
+      </div>
+
+      <div class="closeRow">
+        <button id="closeModal" class="btn primary" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toastWrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    /************************************************************
+     * Unified Save (file:// safe) + compatibility (two keys)
+     ************************************************************/
+    const KEY_PRIMARY = "ICE_ROUNDUP_SAVE_V1";
+    const KEY_SECOND  = "PX_WAVE_SHOOTER_SAVE_V1";
+
+    function defaultSave(){
+      return {
+        unlockedLevel: 1,
+        coins: 0,
+        upgrades: {
+          gunLevel: 0,
+          tazerLevel: 0,
+          healthLevel: 0,
+          droneOwned: false,
+          robotOwned: false
+        }
+      };
+    }
+
+    function safeParse(raw){
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function clampInt(n, a, b){
+      n = Number.isFinite(n) ? Math.floor(n) : a;
+      return Math.max(a, Math.min(b, n));
+    }
+
+    function normalizeSave(obj){
+      const s = defaultSave();
+      if(!obj || typeof obj !== "object") return s;
+
+      s.unlockedLevel = (typeof obj.unlockedLevel === "number") ? obj.unlockedLevel : s.unlockedLevel;
+      s.coins         = (typeof obj.coins === "number") ? obj.coins : s.coins;
+
+      const up = (obj.upgrades && typeof obj.upgrades === "object") ? obj.upgrades : {};
+
+      // migrate legacy keys if present (old schema)
+      const legacyGun   = (typeof up.gun === "number") ? up.gun : 0;
+      const legacyTazer = (typeof up.tazer === "number") ? up.tazer : 0;
+      const legacyHP    = (typeof up.health === "number") ? up.health : 0;
+
+      s.upgrades.gunLevel    = (typeof up.gunLevel === "number") ? up.gunLevel : legacyGun;
+      s.upgrades.tazerLevel  = (typeof up.tazerLevel === "number") ? up.tazerLevel : legacyTazer;
+      s.upgrades.healthLevel = (typeof up.healthLevel === "number") ? up.healthLevel : legacyHP;
+
+      s.upgrades.droneOwned = (typeof up.droneOwned === "boolean") ? up.droneOwned : !!up.drone;
+      s.upgrades.robotOwned = (typeof up.robotOwned === "boolean") ? up.robotOwned : !!up.robot;
+
+      s.unlockedLevel = clampInt(s.unlockedLevel, 1, 5);
+      s.coins = Math.max(0, Math.floor(s.coins));
+
+      s.upgrades.gunLevel    = clampInt(s.upgrades.gunLevel, 0, 5);
+      s.upgrades.tazerLevel  = clampInt(s.upgrades.tazerLevel, 0, 5);
+      s.upgrades.healthLevel = clampInt(s.upgrades.healthLevel, 0, 5);
+
+      return s;
+    }
+
+    function loadFromKey(key){
+      const raw = localStorage.getItem(key);
+      if(!raw) return null;
+      return normalizeSave(safeParse(raw));
+    }
+
+    function mergeSaves(a, b){
+      if(!a && !b) return defaultSave();
+      if(a && !b) return a;
+      if(!a && b) return b;
+
+      const out = defaultSave();
+      out.unlockedLevel = Math.max(a.unlockedLevel, b.unlockedLevel);
+
+      // coins: take larger to avoid doubling when keys disagree
+      out.coins = Math.max(a.coins, b.coins);
+
+      // upgrades: best-of
+      out.upgrades.gunLevel    = Math.max(a.upgrades.gunLevel, b.upgrades.gunLevel);
+      out.upgrades.tazerLevel  = Math.max(a.upgrades.tazerLevel, b.upgrades.tazerLevel);
+      out.upgrades.healthLevel = Math.max(a.upgrades.healthLevel, b.upgrades.healthLevel);
+      out.upgrades.droneOwned  = !!(a.upgrades.droneOwned || b.upgrades.droneOwned);
+      out.upgrades.robotOwned  = !!(a.upgrades.robotOwned || b.upgrades.robotOwned);
+      return out;
+    }
+
+    function loadSave(){
+      const s1 = loadFromKey(KEY_PRIMARY);
+      const s2 = loadFromKey(KEY_SECOND);
+      return mergeSaves(s1, s2);
+    }
+
+    function saveToKey(key, save){
+      try{ localStorage.setItem(key, JSON.stringify(save)); }catch{}
+    }
+
+    function saveSave(save){
+      saveToKey(KEY_PRIMARY, save);
+      saveToKey(KEY_SECOND, save);
+    }
+
+    function resetSave(){
+      try{ localStorage.removeItem(KEY_PRIMARY); }catch{}
+      try{ localStorage.removeItem(KEY_SECOND); }catch{}
+    }
+
+    function fmt(n){ return (Math.floor(n)).toLocaleString(); }
+
+    /************************************************************
+     * Toast
+     ************************************************************/
+    const toastWrap = document.getElementById("toastWrap");
+    function toast(title, msg){
+      const el = document.createElement("div");
+      el.className = "toast";
+      el.innerHTML = `<b>${title}</b><small>${msg}</small>`;
+      toastWrap.appendChild(el);
+      setTimeout(()=>{ el.style.opacity="0"; el.style.transform="translateY(-4px)"; }, 1900);
+      setTimeout(()=>{ el.remove(); }, 2500);
+    }
+
+    /************************************************************
+     * Launcher wiring
+     ************************************************************/
+    let save = loadSave();
+    // persist merged/migrated save immediately so all pages align
+    saveSave(save);
+
+    const statusCoins = document.getElementById("statusCoins");
+    const statusUnlock = document.getElementById("statusUnlock");
+    const continueBtn = document.getElementById("continueBtn");
+    const continueSub = document.getElementById("continueSub");
+
+    statusCoins.textContent = fmt(save.coins);
+    statusUnlock.textContent = `Unlocked: ${save.unlockedLevel}`;
+
+    // Continue goes to highest unlocked level
+    continueSub.textContent = `Resume at Level ${save.unlockedLevel}`;
+    continueBtn.addEventListener("click", () => {
+      window.location.href = `level.html?level=${encodeURIComponent(save.unlockedLevel)}`;
+    });
+
+    // If key mismatch was detected previously, this will effectively "heal" it.
+    if (localStorage.getItem(KEY_PRIMARY) && localStorage.getItem(KEY_SECOND)) {
+      // no-op, just confirm we're aligned
+    } else {
+      toast("Save synced", "Progress storage aligned for launcher, map, upgrades, and levels.");
+    }
+
+    // Reset
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Reset progress, unlocks, and upgrades?")) {
+        resetSave();
+        alert("Reset done.");
+        window.location.reload();
+      }
+    });
+
+    /************************************************************
+     * Modal
+     ************************************************************/
+    const modalBack = document.getElementById("modalBack");
+    const openModal = () => modalBack.style.display = "grid";
+    const closeModal = () => modalBack.style.display = "none";
+
+    document.getElementById("howBtn").addEventListener("click", openModal);
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    modalBack.addEventListener("click", (e) => { if(e.target === modalBack) closeModal(); });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+  </script>
+</body>
+</html>

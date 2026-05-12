@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Agartha</title>
+  <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+</head>
+<body class="menu-page map-page">
+  <main class="map-shell">
+    <header class="map-header">
+      <div>
+        <span class="eyebrow">Route Command</span>
+        <h1>Road to Agartha</h1>
+        <p class="map-subtitle">Choose the next stand, read the route pressure, and keep the signal moving west to east.</p>
+      </div>
+      <nav class="map-nav" aria-label="Map navigation">
+        <a class="menu-button ghost" href="launcher.html">Launcher</a>
+        <a class="menu-button" href="video.html?src=assets/videos/1.mp4&next=prelevel.html">Start Campaign</a>
+      </nav>
+    </header>
+
+    <section class="route-dashboard" aria-label="Route status">
+      <div class="route-card route-status-card">
+        <span class="card-kicker">Signal Chain</span>
+        <strong id="routeProgressText">Signal 1 of 4 Active</strong>
+        <div class="route-progress" aria-hidden="true">
+          <span data-step="1"></span>
+          <span data-step="2"></span>
+          <span data-step="3"></span>
+          <span data-step="4"></span>
+        </div>
+      </div>
+      <div class="route-card">
+        <span class="card-kicker">Current Objective</span>
+        <strong id="routeObjectiveText">Secure Crash Site</strong>
+      </div>
+      <div class="route-card">
+        <span class="card-kicker">Route Weather</span>
+        <strong>Blue Static, Dead Wind</strong>
+      </div>
+      <div class="route-card">
+        <span class="card-kicker">Primary Asset</span>
+        <strong>Ashtar's Bus</strong>
+      </div>
+    </section>
+
+    <section class="map-stage" aria-label="Road to Agartha planning table">
+      <aside class="route-panel left-panel" aria-label="Route dossier">
+        <span class="eyebrow">Field Dossier</span>
+        <h2>Hold by hold, the road opens.</h2>
+        <p>Signals unlock in order. Each active node carries the convoy farther from the wreck and closer to Agartha.</p>
+        <div class="dossier-list">
+          <div><span>01</span><strong>Crash Site</strong></div>
+          <div><span>02</span><strong>Salvage</strong></div>
+          <div><span>03</span><strong>Home Run</strong></div>
+          <div><span>04</span><strong>On The Road</strong></div>
+        </div>
+        <div class="route-legend" aria-label="Marker legend">
+          <span><i class="legend-ready"></i> Ready</span>
+          <span><i class="legend-clear"></i> Cleared</span>
+          <span><i class="legend-locked"></i> Locked</span>
+        </div>
+      </aside>
+
+      <section class="map-board" id="mapBoard" aria-label="Level map">
+        <img class="map-art" src="assets/backgrounds/map.png" alt="Campaign map" />
+        <div class="map-route-line" aria-hidden="true"></div>
+        <div class="map-noise" aria-hidden="true"></div>
+        <div class="map-radar" aria-hidden="true"></div>
+
+        <a class="level-marker marker-one" data-level="1" data-name="Crash Site" href="index.html?level=1" aria-label="Deploy to Crash Site">
+          <span class="marker-ping"></span>
+          <span class="marker-icon"><img src="assets/backgrounds/level1.png" alt="" /></span>
+          <span class="marker-label"><strong>Crash Site</strong><em>Signal Found</em><small>Wave Defense</small></span>
+        </a>
+
+        <a class="level-marker marker-two" data-level="2" data-name="Salvage" href="level2.html" aria-label="Deploy to Salvage">
+          <span class="marker-ping"></span>
+          <span class="marker-icon"><img src="assets/backgrounds/level2.png" alt="" /></span>
+          <span class="marker-label"><strong>Salvage</strong><em>Supply Route</em><small>Top Down Hold</small></span>
+        </a>
+
+        <a class="level-marker marker-three" data-level="3" data-name="Home Run" href="index.html?level=3" aria-label="Deploy to Home Run">
+          <span class="marker-ping"></span>
+          <span class="marker-icon"><img src="assets/backgrounds/level3.png" alt="" /></span>
+          <span class="marker-label"><strong>Home Run</strong><em>Final Rally</em><small>Dense Swarm</small></span>
+        </a>
+
+        <a class="level-marker marker-four" data-level="4" data-name="On The Road" href="index.html?level=4" aria-label="Deploy to On The Road">
+          <span class="marker-ping"></span>
+          <span class="marker-icon"><img src="assets/backgrounds/level4.png" alt="" /></span>
+          <span class="marker-label"><strong>On The Road</strong><em>Agartha Route</em><small>Road Breakout</small></span>
+        </a>
+
+        <div id="mapDevPanel" class="map-dev-panel" hidden>
+          <div class="map-dev-head">
+            <strong>Map Dev</strong>
+            <span id="mapDevStatus">Drag markers</span>
+          </div>
+          <p class="map-dev-hint">Move level markers, then save or export their percentage positions.</p>
+          <div class="map-dev-actions">
+            <button id="mapMarkerSaveBtn" type="button">Save</button>
+            <button id="mapMarkerResetBtn" type="button">Reset</button>
+          </div>
+          <textarea id="mapMarkerExport" class="map-marker-export" rows="8" spellcheck="false" placeholder="Exported marker JSON"></textarea>
+          <div class="map-dev-actions">
+            <button id="mapMarkerExportBtn" type="button">Export</button>
+            <button id="mapMarkerImportBtn" type="button">Import</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="route-panel right-panel" aria-label="Dispatch notes">
+        <span class="eyebrow">Dispatch</span>
+        <h2 id="dispatchTitle">Next Stand</h2>
+        <p id="dispatchBody">Hold the active signal to unlock the next leg of the road.</p>
+        <div class="signal-stack">
+          <div><span>Comms</span><strong>Patchy</strong></div>
+          <div><span>Fuel</span><strong>Critical</strong></div>
+          <div><span>Walls</span><strong>Portable</strong></div>
+          <div><span>Genz</span><strong>Ready</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="level-deck" aria-label="Level dispatch cards">
+      <a class="level-dispatch-card" data-level-card="1" href="index.html?level=1">
+        <img src="assets/backgrounds/level1.png" alt="" />
+        <span>01</span>
+        <strong>Crash Site</strong>
+        <em>Secure the wreck and light the first signal.</em>
+      </a>
+      <a class="level-dispatch-card" data-level-card="2" href="level2.html">
+        <img src="assets/backgrounds/level2.png" alt="" />
+        <span>02</span>
+        <strong>Salvage</strong>
+        <em>Hold while Ashtar fixes the bus.</em>
+      </a>
+      <a class="level-dispatch-card" data-level-card="3" href="index.html?level=3">
+        <img src="assets/backgrounds/level3.png" alt="" />
+        <span>03</span>
+        <strong>Home Run</strong>
+        <em>Push the rally point through heavier waves.</em>
+      </a>
+      <a class="level-dispatch-card" data-level-card="4" href="index.html?level=4">
+        <img src="assets/backgrounds/level4.png" alt="" />
+        <span>04</span>
+        <strong>On The Road</strong>
+        <em>Break the route open toward Agartha.</em>
+      </a>
+    </section>
+  </main>
+  <script src="scripts/save-system.js"></script>
+  <script src="scripts/map-progress.js?v=menu-overhaul-11"></script>
+</body>
+</html>
