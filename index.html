@@ -1039,7 +1039,7 @@
           <a href="#speeches"><i data-lucide="mic-2"></i>Speeches</a>
           <a href="#pdfs"><i data-lucide="file-text"></i>PDFs</a>
           <a href="#edits"><i data-lucide="scissors"></i>Edits</a>
-          <a href="#forum"><i data-lucide="messages-square"></i>Forum</a>
+          <a href="forum/"><i data-lucide="messages-square"></i>Forum</a>
           <a href="games/"><i data-lucide="gamepad-2"></i>Gaming</a>
           <a href="#find-me"><i data-lucide="map-pin"></i>Find Me</a>
         </nav>
@@ -1188,6 +1188,7 @@
                 <h3>Forum fireline</h3>
                 <p>A community floor for debates, source drops, episode reactions, requests, polls, and conversations that keep moving.</p>
                 <div class="feature-tags"><span>Threads</span><span>Polls</span><span>Requests</span></div>
+                <a class="button button-primary" href="forum/"><i data-lucide="messages-square"></i>Open Forum</a>
               </div>
               <aside class="feature-side" aria-label="Forum queue">
                 <div class="mini-feed">
@@ -1265,10 +1266,10 @@
               <div><i data-lucide="film"></i><h3>Edit Bay</h3><p>Short-form edits, reels, thumbnails, and visual fragments that make the archive travel.</p></div>
               <div class="drop-meta"><span>Edits</span><b>Cut</b></div>
             </article>
-            <article class="drop-card" id="forum">
+            <a class="drop-card" id="forum" href="forum/">
               <div><i data-lucide="message-circle-more"></i><h3>Forum Pulse</h3><p>Open threads, post reactions, research requests, and member-led conversations.</p></div>
               <div class="drop-meta"><span>Forum</span><b>Live</b></div>
-            </article>
+            </a>
             <a class="drop-card" id="gaming" href="games/">
               <div><i data-lucide="trophy"></i><h3>Gaming Desk</h3><p>Stream nights, squad clips, community sessions, and whatever happens after the mic check.</p></div>
               <div class="drop-meta"><span>Gaming</span><b>Queue</b></div>
@@ -1396,8 +1397,8 @@
 
     tabButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        if (button.dataset.panel === "gaming") {
-          window.location.href = "games/";
+        if (button.dataset.panel === "gaming" || button.dataset.panel === "forum") {
+          window.location.href = button.dataset.panel === "gaming" ? "games/" : "forum/";
           return;
         }
 
