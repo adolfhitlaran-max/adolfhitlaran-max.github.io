@@ -610,15 +610,25 @@ h2 {
   margin: 0.7rem 0;
 }
 
-.selected-note {
+.selected-note,
+.player-status {
   color: rgba(245, 239, 226, 0.68);
   font-size: 0.9rem;
+}
+
+.player-status.error {
+  color: #ffd0d0;
 }
 
 .selected-actions {
   flex-wrap: wrap;
   gap: 0.55rem;
   margin-top: 1rem;
+}
+
+.original-link {
+  min-height: 2.75rem;
+  padding-inline: 0.25rem;
 }
 
 .empty-state {

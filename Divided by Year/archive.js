@@ -4,7 +4,8 @@
     year: "all",
     query: "",
     sort: "date-asc",
-    selectedId: ""
+    selectedId: "",
+    autoplay: false
   };
 
   const els = {
@@ -59,8 +60,7 @@
       const card = event.target.closest("[data-video-id]");
       if (!card) return;
       if (event.target.closest("a")) return;
-      state.selectedId = card.dataset.videoId;
-      render();
+      selectVideo(card.dataset.videoId, true);
     });
 
     els.videoList.addEventListener("keydown", (event) => {
@@ -68,11 +68,16 @@
       if (!card || event.target !== card) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
-      state.selectedId = card.dataset.videoId;
-      render();
+      selectVideo(card.dataset.videoId, true);
     });
 
     els.selectedVideo.addEventListener("click", (event) => {
+      const playButton = event.target.closest("[data-player-action='play']");
+      if (playButton) {
+        playSelectedVideo();
+        return;
+      }
+
       const action = event.target.closest("[data-select-action]");
       if (!action) return;
       const visible = getVisibleVideos();
@@ -81,9 +86,15 @@
       const nextIndex = action.dataset.selectAction === "next"
         ? (index + 1) % visible.length
         : (index - 1 + visible.length) % visible.length;
-      state.selectedId = visible[nextIndex].id;
-      render();
+      selectVideo(visible[nextIndex].id, true);
     });
+  }
+
+  function selectVideo(id, autoplay = false) {
+    state.selectedId = id;
+    state.autoplay = autoplay;
+    render();
+    els.selectedVideo.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
   function render() {
@@ -97,6 +108,7 @@
     renderList(visible);
     renderSelected(visible);
     refreshIcons();
+    wirePlayer();
   }
 
   function renderStats(visible) {
@@ -145,8 +157,7 @@
         </div>
         <h3>${escapeHTML(video.title)}</h3>
         <div class="card-actions">
-          <button class="text-link" type="button"><i data-lucide="play"></i>Load Player</button>
-          <a class="text-link" href="${assetUrl(video.path)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Open File</a>
+          <button class="text-link" type="button"><i data-lucide="play"></i>Watch Here</button>
         </div>
       </article>
     `;
@@ -163,7 +174,7 @@
     els.selectedVideo.innerHTML = `
       <article class="selected-card">
         <div class="selected-media">
-          ${canPlay ? `<video controls preload="metadata" src="${assetUrl(video.path)}"></video>` : `<div class="empty-state">Preview unavailable for ${escapeHTML(video.extension)} files.</div>`}
+          ${canPlay ? `<video id="archivePlayer" controls playsinline preload="metadata" controlsList="nodownload" src="${assetUrl(video.path)}">Your browser cannot play this video inline.</video>` : `<div class="empty-state">Preview unavailable for ${escapeHTML(video.extension)} files.</div>`}
         </div>
         <div class="selected-body">
           <div class="video-meta">
@@ -172,15 +183,61 @@
             <span>${escapeHTML(video.sizeLabel)}</span>
           </div>
           <h2>${escapeHTML(video.title)}</h2>
-          <p class="selected-note">Large archive files may take a moment to load. If the browser cannot preview this format, open the file directly.</p>
+          <p id="playerStatus" class="player-status" role="status">Ready to play in this page. Large archive files may take a moment to buffer.</p>
           <div class="selected-actions">
-            <a class="button button-primary" href="${assetUrl(video.path)}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Open File</a>
+            <button class="button button-primary" type="button" data-player-action="play"><i data-lucide="play"></i>Play Here</button>
             <button class="button button-secondary" type="button" data-select-action="prev"><i data-lucide="arrow-left"></i>Previous</button>
             <button class="button button-secondary" type="button" data-select-action="next">Next<i data-lucide="arrow-right"></i></button>
+            <a class="text-link original-link" href="${assetUrl(video.path)}" target="_blank" rel="noopener"><i data-lucide="file-video"></i>Original file</a>
           </div>
         </div>
       </article>
     `;
+  }
+
+  function wirePlayer() {
+    const player = document.getElementById("archivePlayer");
+    const status = document.getElementById("playerStatus");
+    if (!player || !status) return;
+
+    player.addEventListener("loadedmetadata", () => {
+      status.textContent = "Loaded in the player. Press play or use the Play Here button.";
+      status.classList.remove("error");
+    }, { once: true });
+
+    player.addEventListener("error", () => {
+      status.textContent = "This file did not load inline. On GitHub Pages, Git LFS videos usually need external video hosting to stream instead of opening as files.";
+      status.classList.add("error");
+    }, { once: true });
+
+    if (state.autoplay) {
+      state.autoplay = false;
+      playSelectedVideo();
+    }
+  }
+
+  function playSelectedVideo() {
+    const player = document.getElementById("archivePlayer");
+    const status = document.getElementById("playerStatus");
+    if (!player) return;
+
+    player.load();
+    const playAttempt = player.play();
+    if (playAttempt && typeof playAttempt.catch === "function") {
+      playAttempt
+        .then(() => {
+          if (status) {
+            status.textContent = "Playing in the page.";
+            status.classList.remove("error");
+          }
+        })
+        .catch(() => {
+          if (status) {
+            status.textContent = "The browser blocked autoplay or could not stream this file. Press play on the video controls; if it still fails, this file needs web-encoded MP4 hosting outside Git LFS.";
+            status.classList.add("error");
+          }
+        });
+    }
   }
 
   function getVisibleVideos() {
@@ -226,7 +283,7 @@
   }
 
   function assetUrl(path) {
-    return encodeURI(path).replace(/'/g, "%27");
+    return String(path || "").split("/").map((part) => encodeURIComponent(part)).join("/");
   }
 
   function escapeHTML(value) {
