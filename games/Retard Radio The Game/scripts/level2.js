@@ -35,7 +35,7 @@ const requestedPhase = params.get('phase') === '2' ? 2 : 1;
 const STORAGE_KEY = 'holdTheLine.level2Config.v5';
 const PHASE_STORAGE_KEY = 'holdTheLine.level2Phase.v1';
 const PHASE_RETURN_STORAGE_KEY = 'holdTheLine.level2PhaseReturn.v1';
-const BUS_COMPLETE_VIDEO_SRC = 'assets/videos/3.mp4';
+const BUS_COMPLETE_VIDEO_SRC = 'assets/videos/2.mp4';
 const PROGRESS_STORAGE_KEY = window.HOLD_LINE_SAVE
   ? window.HOLD_LINE_SAVE.scopedKey('holdTheLine.highestUnlockedLevel.v1')
   : 'holdTheLine.highestUnlockedLevel.v1';
@@ -2291,7 +2291,7 @@ function updatePhaseTrigger() {
     // Phase resume is best-effort when session storage is unavailable.
   }
   const next = encodeURIComponent('level2.html?phase=2');
-  window.location.href = `video.html?src=${encodeURIComponent('assets/videos/4.mp4')}&next=${next}`;
+  window.location.href = `video.html?src=${encodeURIComponent('assets/videos/2.mp4')}&next=${next}`;
 }
 
 function startPhase2(options = {}) {
