@@ -366,7 +366,11 @@ canvas {
   gap: 10px;
 }
 
-button {
+button,
+.game-hub-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: auto;
   cursor: pointer;
   border: 1px solid rgba(255,255,255,0.18);
@@ -376,16 +380,19 @@ button {
   font-weight: 800;
   padding: 11px 15px;
   letter-spacing: 0.04em;
+  text-decoration: none;
   text-transform: uppercase;
   box-shadow: 0 12px 28px rgba(0,0,0,0.26);
 }
 
-button:hover {
+button:hover,
+.game-hub-link:hover {
   transform: translateY(-1px);
   background: linear-gradient(180deg, rgba(93, 216, 255, 0.28), rgba(93, 216, 255, 0.09));
 }
 
-button:focus-visible {
+button:focus-visible,
+.game-hub-link:focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;
 }
@@ -600,7 +607,8 @@ button:focus-visible {
   gap: 12px;
 }
 
-button {
+button,
+.game-hub-link {
   min-height: 44px;
   border-color: rgba(184,243,255,0.22);
   background:
@@ -610,7 +618,9 @@ button {
 }
 
 button:hover,
-button:focus-visible {
+button:focus-visible,
+.game-hub-link:hover,
+.game-hub-link:focus-visible {
   border-color: rgba(93,216,255,0.62);
   background:
     linear-gradient(180deg, rgba(93,216,255,0.23), rgba(93,216,255,0.07)),
@@ -743,7 +753,8 @@ button:focus-visible {
     display: grid;
   }
 
-  .buttonRow button {
+  .buttonRow button,
+  .buttonRow .game-hub-link {
     width: 100%;
   }
 }

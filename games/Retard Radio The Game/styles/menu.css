@@ -1133,6 +1133,13 @@ p {
   background: rgba(5,8,18,0.62);
 }
 
+.game-hub-float {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 8;
+}
+
 .menu-button:hover,
 .menu-button:focus-visible,
 .save-slot:hover,
@@ -1681,5 +1688,12 @@ p {
 
   .marker-label small {
     display: none;
+  }
+
+  .game-hub-float {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    width: auto;
   }
 }
