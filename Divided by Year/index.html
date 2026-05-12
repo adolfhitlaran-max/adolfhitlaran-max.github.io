@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Uncensored Media videos organized by year in the Voice of Uncle archive." />
+  <title>Videos | Voice of Uncle</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="archive.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="archive-manifest.js" defer></script>
+  <script src="archive.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#archiveApp">Skip to videos</a>
+
+  <header class="topbar" aria-label="Video archive navigation">
+    <a class="brand" href="../">
+      <span class="brand-mark"><i data-lucide="radio"></i></span>
+      <span>Uncensored Media</span>
+    </a>
+
+    <nav class="nav-tabs" aria-label="Primary">
+      <a class="active" href="./"><i data-lucide="play-square"></i>Videos</a>
+      <a href="../forum/"><i data-lucide="messages-square"></i>Forum</a>
+      <a href="../games/"><i data-lucide="gamepad-2"></i>Gaming</a>
+      <a href="../#find-me"><i data-lucide="map-pin"></i>Find Me</a>
+    </nav>
+  </header>
+
+  <main id="archiveApp">
+    <section class="archive-hero" aria-labelledby="archiveTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">Videos / Divided by Year</p>
+        <h1 id="archiveTitle">Voice of Uncle</h1>
+        <p class="hero-lede">A year-by-year video archive built for searching, scanning, and opening the right clip without digging through folders.</p>
+      </div>
+
+      <aside class="hero-panel" aria-label="Archive tools">
+        <label class="search-box">
+          <i data-lucide="search"></i>
+          <span class="sr-only">Search videos</span>
+          <input id="searchInput" type="search" placeholder="Search dates, filenames, years" autocomplete="off" />
+        </label>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#videoLibrary"><i data-lucide="list-video"></i>Browse Videos</a>
+          <button id="clearFiltersBtn" class="button button-secondary" type="button"><i data-lucide="rotate-ccw"></i>Reset</button>
+        </div>
+        <div class="stat-row">
+          <div><strong id="totalVideos">0</strong><span>videos</span></div>
+          <div><strong id="totalYears">0</strong><span>years</span></div>
+          <div><strong id="totalSize">0 GB</strong><span>indexed</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="voice-section" aria-labelledby="voiceTitle">
+      <div>
+        <p class="section-kicker">Whole section</p>
+        <h2 id="voiceTitle">Voice of Uncle Archive</h2>
+      </div>
+      <p>Every video currently inside <code>Divided by Year</code> is indexed below, grouped by year, with a focused player panel for quick review.</p>
+    </section>
+
+    <section id="videoLibrary" class="library-shell" aria-label="Video archive">
+      <aside class="year-rail" aria-label="Years">
+        <div class="rail-head">
+          <span>Years</span>
+          <strong id="visibleCount">0</strong>
+        </div>
+        <div id="yearFilters" class="year-filters"></div>
+      </aside>
+
+      <section class="video-list-panel" aria-label="Video list">
+        <div class="list-toolbar">
+          <div>
+            <p class="section-kicker">Archive Index</p>
+            <h2 id="listTitle">All Videos</h2>
+          </div>
+          <label class="sort-box">
+            <span>Sort</span>
+            <select id="sortSelect">
+              <option value="date-asc">Year Order</option>
+              <option value="date-desc">Newest First</option>
+              <option value="size-desc">Largest Files</option>
+              <option value="title">Title</option>
+            </select>
+          </label>
+        </div>
+        <div id="videoList" class="video-list" aria-live="polite"></div>
+      </section>
+
+      <aside class="player-panel" aria-label="Selected video">
+        <div id="selectedVideo" class="selected-video"></div>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
