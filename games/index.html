@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Uncensored Media game hub." />
+  <title>Gaming | Uncensored Media</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #050607;
+      --panel: #111417;
+      --paper: #f5efe2;
+      --muted: #b8b7ae;
+      --line: rgba(245, 239, 226, 0.16);
+      --red: #e5242a;
+      --cyan: #00d5ff;
+      --amber: #ffb83d;
+      --green: #8fff6f;
+      --max: 1180px;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(229, 36, 42, 0.16), transparent 22rem),
+        radial-gradient(circle at 82% 32%, rgba(0, 213, 255, 0.14), transparent 24rem),
+        linear-gradient(180deg, #050607 0%, #0a0d0e 52%, #10110f 100%);
+      color: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 6, 7, 0.78);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar-inner,
+    .wrap {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      min-height: 4.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-width: 0;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border: 1px solid rgba(245, 239, 226, 0.35);
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(229, 36, 42, 0.9), rgba(0, 213, 255, 0.55));
+      font-size: 0.74rem;
+    }
+
+    .button {
+      min-height: 2.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(245, 239, 226, 0.18);
+      border-radius: 999px;
+      padding: 0.68rem 0.95rem;
+      background: rgba(245, 239, 226, 0.08);
+      color: var(--paper);
+      font-weight: 900;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(0, 213, 255, 0.5);
+      outline: none;
+    }
+
+    .button-primary {
+      border-color: transparent;
+      background: var(--paper);
+      color: var(--ink);
+    }
+
+    .hero {
+      padding: 5.5rem 0 3.2rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 0.75rem;
+      color: var(--paper);
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 2.5rem;
+      height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--cyan));
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 12ch;
+      margin-bottom: 1rem;
+      font-size: 5rem;
+      line-height: 0.9;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .lede {
+      max-width: 46rem;
+      margin-bottom: 0;
+      color: rgba(245, 239, 226, 0.78);
+      font-size: 1.1rem;
+    }
+
+    .section {
+      padding: 3.8rem 0;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(18rem, 0.55fr);
+      gap: 1.5rem;
+      align-items: end;
+      margin-bottom: 1.4rem;
+    }
+
+    .section-kicker {
+      margin-bottom: 0.45rem;
+      color: var(--cyan);
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-size: 2.65rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .section-head p {
+      margin-bottom: 0;
+      color: rgba(245, 239, 226, 0.7);
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .game-card {
+      min-height: 31rem;
+      display: grid;
+      grid-template-rows: 13.5rem minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(245, 239, 226, 0.08), rgba(245, 239, 226, 0.03)),
+        rgba(5, 6, 7, 0.62);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.32);
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .game-card:hover,
+    .game-card:focus-within {
+      transform: translateY(-4px);
+      border-color: rgba(0, 213, 255, 0.44);
+    }
+
+    .game-media {
+      position: relative;
+      overflow: hidden;
+      background: #090b0d;
+    }
+
+    .game-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.05) contrast(1.04);
+    }
+
+    .game-media::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, transparent 36%, rgba(5, 6, 7, 0.82)),
+        radial-gradient(circle at 80% 18%, rgba(0, 213, 255, 0.2), transparent 16rem);
+      pointer-events: none;
+    }
+
+    .game-body {
+      display: grid;
+      align-content: space-between;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .game-body h3 {
+      margin-bottom: 0.65rem;
+      font-size: 1.55rem;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .game-body p {
+      color: rgba(245, 239, 226, 0.68);
+      font-size: 0.95rem;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.85rem;
+    }
+
+    .tag-row span {
+      border: 1px solid rgba(245, 239, 226, 0.16);
+      border-radius: 999px;
+      padding: 0.35rem 0.58rem;
+      color: rgba(245, 239, 226, 0.72);
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .game-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .game-actions .button {
+      flex: 1 1 9rem;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 1.4rem 0;
+      color: rgba(245, 239, 226, 0.58);
+      font-size: 0.86rem;
+    }
+
+    @media (max-width: 980px) {
+      h1 {
+        font-size: 3.7rem;
+      }
+
+      .section-head,
+      .game-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .game-card {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar-inner,
+      .wrap {
+        width: calc(100% - 1rem);
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 0.9rem 0;
+      }
+
+      .hero {
+        padding: 3.4rem 0 2.4rem;
+      }
+
+      h1 {
+        font-size: 2.55rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      .game-card {
+        grid-template-rows: 11rem minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="../index.html#top" aria-label="Back to Uncensored Media">
+        <span class="brand-mark">UM</span>
+        <span>Uncensored Media</span>
+      </a>
+      <a class="button button-primary" href="../index.html#top">Landing</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Game shelf</p>
+        <h1>Gaming Desk</h1>
+        <p class="lede">
+          A launch hub for the playable browser games inside this repo. Pick a game, jump into the launcher, and keep everything GitHub Pages-friendly.
+        </p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="games-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Now loaded</p>
+            <h2 id="games-title">Choose your run</h2>
+          </div>
+          <p>Each card links to the correct local launch file and keeps its original asset folder untouched.</p>
+        </div>
+
+        <div class="game-grid">
+          <article class="game-card">
+            <div class="game-media">
+              <img src="GeorgeFloyd%20Game/image.jpg" alt="" />
+            </div>
+            <div class="game-body">
+              <div>
+                <h3>Neon Catch</h3>
+                <p>A timed arcade catch game with ten levels, power-ups, background art, and music rotation.</p>
+                <div class="tag-row"><span>Arcade</span><span>Canvas</span><span>Music</span></div>
+              </div>
+              <div class="game-actions">
+                <a class="button button-primary" href="GeorgeFloyd%20Game/GFGame.html">Play</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="game-media">
+              <img src="ICEGame/assets/background/launcher.png" alt="" />
+            </div>
+            <div class="game-body">
+              <div>
+                <h3>ICE Roundup</h3>
+                <p>A level-based action launcher with map, upgrades, persistent save data, and multiple mission pages.</p>
+                <div class="tag-row"><span>Action</span><span>Levels</span><span>Upgrades</span></div>
+              </div>
+              <div class="game-actions">
+                <a class="button button-primary" href="ICEGame/index.html">Launch</a>
+                <a class="button" href="ICEGame/map.html">Map</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="game-media">
+              <img src="Retard%20Radio%20The%20Game/assets/backgrounds/level1map.png" alt="" />
+            </div>
+            <div class="game-body">
+              <div>
+                <h3>Road to Agartha</h3>
+                <p>A campaign launcher for Hold the Line with route previews, save slots, intro videos, and wave survival gameplay.</p>
+                <div class="tag-row"><span>Campaign</span><span>Survival</span><span>Save Slots</span></div>
+              </div>
+              <div class="game-actions">
+                <a class="button button-primary" href="Retard%20Radio%20The%20Game/launcher.html">Launch</a>
+                <a class="button" href="Retard%20Radio%20The%20Game/map.html">Map</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">Gaming Desk is wired to the local games folder.</div>
+  </footer>
+</body>
+</html>

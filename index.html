@@ -1040,7 +1040,7 @@
           <a href="#pdfs"><i data-lucide="file-text"></i>PDFs</a>
           <a href="#edits"><i data-lucide="scissors"></i>Edits</a>
           <a href="#forum"><i data-lucide="messages-square"></i>Forum</a>
-          <a href="#gaming"><i data-lucide="gamepad-2"></i>Gaming</a>
+          <a href="games/"><i data-lucide="gamepad-2"></i>Gaming</a>
           <a href="#find-me"><i data-lucide="map-pin"></i>Find Me</a>
         </nav>
       </div>
@@ -1205,9 +1205,10 @@
             <article class="tab-panel" id="panel-gaming" role="tabpanel" aria-labelledby="tab-gaming">
               <div class="feature-main" data-index="05">
                 <div class="feature-icon"><i data-lucide="gamepad-2"></i></div>
-                <h3>Gaming after dark</h3>
-                <p>Stream nights, clips, squads, chaos reels, tournament posts, and off-script sessions when the news desk powers down.</p>
-                <div class="feature-tags"><span>Streams</span><span>Clips</span><span>Squads</span></div>
+                <h3>Gaming desk</h3>
+                <p>The games folder is now wired as a separate playable hub with launch cards for every browser game in the repo.</p>
+                <div class="feature-tags"><span>3 games</span><span>Browser play</span><span>Local saves</span></div>
+                <a class="button button-primary" href="games/"><i data-lucide="gamepad-2"></i>Open Games</a>
               </div>
               <aside class="feature-side" aria-label="Gaming queue">
                 <div class="mini-feed">
@@ -1268,10 +1269,10 @@
               <div><i data-lucide="message-circle-more"></i><h3>Forum Pulse</h3><p>Open threads, post reactions, research requests, and member-led conversations.</p></div>
               <div class="drop-meta"><span>Forum</span><b>Live</b></div>
             </article>
-            <article class="drop-card" id="gaming">
+            <a class="drop-card" id="gaming" href="games/">
               <div><i data-lucide="trophy"></i><h3>Gaming Desk</h3><p>Stream nights, squad clips, community sessions, and whatever happens after the mic check.</p></div>
               <div class="drop-meta"><span>Gaming</span><b>Queue</b></div>
-            </article>
+            </a>
             <article class="drop-card">
               <div><i data-lucide="radio-tower"></i><h3>Signal Feed</h3><p>Announcements, pinned posts, live alerts, and quick updates from the creator desk.</p></div>
               <div class="drop-meta"><span>Updates</span><b>Fresh</b></div>
@@ -1394,10 +1395,17 @@
     };
 
     tabButtons.forEach((button) => {
-      button.addEventListener("click", () => activatePanel(button.dataset.panel));
+      button.addEventListener("click", () => {
+        if (button.dataset.panel === "gaming") {
+          window.location.href = "games/";
+          return;
+        }
+
+        activatePanel(button.dataset.panel);
+      });
     });
 
-    const observedLinks = [...document.querySelectorAll(".nav-tabs a")];
+    const observedLinks = [...document.querySelectorAll(".nav-tabs a[href^='#']")];
     const sections = observedLinks
       .map((link) => document.querySelector(link.getAttribute("href")))
       .filter(Boolean);
