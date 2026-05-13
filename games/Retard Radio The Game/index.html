@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Hold The Line</title>
   <link rel="stylesheet" href="styles/style.css?v=menu-overhaul-11" />
+  <link rel="stylesheet" href="../mobile-controls.css" />
 </head>
 <body>
   <div id="gameShell">
@@ -134,10 +135,31 @@
           <a class="game-hub-link" href="../" data-back-link>Back</a>
         </div>
       </div>
+
+      <div class="mobile-controls" aria-label="Touch controls">
+        <p class="mobile-rotate-note">Landscape gives this one the most room.</p>
+        <div class="mobile-dpad" aria-label="Move">
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyW" aria-label="Jump">Jump</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyA" aria-label="Move left">Left</button>
+          <button class="mobile-btn accent" type="button" data-mobile-key="ShiftLeft" aria-label="Dash">Dash</button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyD" aria-label="Move right">Right</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn danger" type="button" data-mobile-key="KeyP" data-mobile-mode="tap" aria-label="Pause">Pause</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        </div>
+        <div class="mobile-actions mobile-actions-wide" aria-label="Actions">
+          <button class="mobile-btn primary" type="button" data-mobile-key="KeyJ" aria-label="Punch">Punch</button>
+          <button class="mobile-btn accent" type="button" data-mobile-key="KeyQ" aria-label="Energy shot">Shot</button>
+          <button class="mobile-btn" type="button" data-mobile-key="Space" aria-label="Shockwave">Shock</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script src="../back-link.js"></script>
+  <script src="../mobile-controls.js"></script>
   <script src="scripts/save-system.js"></script>
   <script src="scripts/upgrades.js"></script>
   <script src="scripts/game.js?v=genz-shot-small-4"></script>

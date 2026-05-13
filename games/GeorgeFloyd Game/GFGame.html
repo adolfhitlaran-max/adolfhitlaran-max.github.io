@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
   <title>Neon Catch — Timed 10 Levels + Power-Ups + Music/SFX</title>
   <style>
     :root{
@@ -17,17 +17,24 @@
     }
     html, body{
       height:100%;
+      min-height:100dvh;
       margin:0;
       overflow:hidden;
       background:#000;
       color:var(--text);
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      overscroll-behavior:none;
+      touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
     }
     canvas#game{
       position:fixed;
       inset:0;
       width:100vw;
       height:100vh;
+      height:100dvh;
       display:block;
       touch-action:none;
     }
@@ -225,6 +232,100 @@
       background: rgba(0,0,0,.35);
       border: 1px solid rgba(255,255,255,.14);
       margin: 0 2px;
+    }
+
+    @media (max-width: 760px), (hover: none), (pointer: coarse) {
+      .hud {
+        top: max(8px, env(safe-area-inset-top));
+        width: calc(100vw - 12px);
+        align-items: flex-start;
+        gap: 6px;
+        padding: 7px;
+        border-radius: 12px;
+      }
+
+      .hud-left,
+      .hud-right {
+        gap: 5px;
+      }
+
+      .hud-left {
+        flex: 1 1 100%;
+      }
+
+      .hud-right {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        flex: 1 1 100%;
+        width: 100%;
+        margin-left: 0;
+      }
+
+      .hud-right .btn {
+        min-width: 0;
+      }
+
+      .hud-right #startBtn,
+      .hud-right #restartBtn {
+        display: none !important;
+      }
+
+      .pill {
+        padding: 6px 8px;
+        font-size: 12px;
+        box-shadow: none;
+      }
+
+      .barWrap {
+        order: 20;
+        flex: 1 1 100%;
+        min-width: 0;
+        padding: 6px 8px;
+        box-shadow: none;
+      }
+
+      .btn {
+        min-height: 38px;
+        padding: 7px 9px;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+
+      .hint {
+        bottom: max(8px, env(safe-area-inset-bottom));
+        width: calc(100vw - 16px);
+        font-size: 11px;
+      }
+
+      .hint .small {
+        display: none;
+      }
+
+      .panel {
+        max-height: calc(100dvh - 18px);
+        overflow: auto;
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .panel h1 {
+        font-size: 24px;
+      }
+
+      .grid2 {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toggle {
+        min-width: min(100%, 180px);
+        padding: 9px 10px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -1007,15 +1108,34 @@
 
     ctx.globalAlpha=1;
     ctx.fillStyle="rgba(255,255,255,.95)";
-    ctx.font="900 40px system-ui, sans-serif";
+    const titleSize = clamp(cw * 0.1, 28, 40);
+    ctx.font=`900 ${titleSize}px system-ui, sans-serif`;
     ctx.textAlign="center";
-    ctx.fillText(title, cw/2, y+80);
+    ctx.fillText(title, cw/2, y + Math.max(62, titleSize + 36));
 
     ctx.fillStyle="rgba(255,255,255,.82)";
-    ctx.font="16px system-ui, sans-serif";
-    ctx.fillText(subtitle, cw/2, y+120);
+    const subSize = clamp(cw * 0.04, 12, 16);
+    ctx.font=`${subSize}px system-ui, sans-serif`;
+    drawWrappedCanvasText(subtitle, cw/2, y + Math.max(96, titleSize + 68), w - 36, subSize * 1.45);
 
     ctx.restore();
+  }
+
+  function drawWrappedCanvasText(text, x, y, maxWidth, lineHeight){
+    const words = String(text || "").split(/\s+/).filter(Boolean);
+    let line = "";
+    let row = 0;
+    for(const word of words){
+      const test = line ? `${line} ${word}` : word;
+      if(ctx.measureText(test).width > maxWidth && line){
+        ctx.fillText(line, x, y + row * lineHeight);
+        line = word;
+        row++;
+      }else{
+        line = test;
+      }
+    }
+    if(line) ctx.fillText(line, x, y + row * lineHeight);
   }
 
   function drawScene(){
@@ -1141,7 +1261,7 @@
     ctx.restore();
 
     if (!state.running && !state.ended){
-      drawOverlayBox("Ready?", "2:00 per level • Finish Level 10 to set your Best");
+      drawOverlayBox("Ready?", view.w < 520 ? "2:00 per level. Finish Level 10." : "2:00 per level • Finish Level 10 to set your Best");
     }
     if (state.transitionTimer > 0 && state.running && !state.ended){
       drawOverlayBox(`Level ${state.level}`, "GO GO GO.");

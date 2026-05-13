@@ -351,17 +351,36 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyE') tryInteractWithMeetCharacter();
 });
 window.addEventListener('keyup', e => keys.delete(e.code));
-canvas.addEventListener('mousemove', e => {
+function updateMouseFromClient(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
-  mouse.screenX = (e.clientX - rect.left) * (W / rect.width);
-  mouse.screenY = (e.clientY - rect.top) * (H / rect.height);
+  mouse.screenX = (clientX - rect.left) * (W / rect.width);
+  mouse.screenY = (clientY - rect.top) * (H / rect.height);
   updateMouseWorld();
+}
+canvas.addEventListener('mousemove', e => {
+  updateMouseFromClient(e.clientX, e.clientY);
 });
-canvas.addEventListener('mousedown', () => {
+canvas.addEventListener('mousedown', e => {
+  updateMouseFromClient(e.clientX, e.clientY);
   mouse.down = true;
   if (gameDevMode) handleDevClick();
 });
 window.addEventListener('mouseup', () => { mouse.down = false; });
+canvas.addEventListener('pointerdown', event => {
+  if (event.pointerType !== 'touch') return;
+  event.preventDefault();
+  updateMouseFromClient(event.clientX, event.clientY);
+  mouse.down = true;
+  canvas.setPointerCapture?.(event.pointerId);
+  if (gameDevMode) handleDevClick();
+});
+canvas.addEventListener('pointermove', event => {
+  if (event.pointerType !== 'touch') return;
+  event.preventDefault();
+  updateMouseFromClient(event.clientX, event.clientY);
+});
+window.addEventListener('pointerup', () => { mouse.down = false; });
+window.addEventListener('pointercancel', () => { mouse.down = false; });
 startBtn.addEventListener('click', startPrelevel);
 interactBtn?.addEventListener('click', tryInteractWithMeetCharacter);
 devPanel?.querySelector('.prelevel-dev-head')?.addEventListener('mousedown', startDevPanelDrag);
@@ -415,6 +434,36 @@ function update(dt) {
   if (player.hp <= 0) resetPrelevel();
 }
 
+function setMouseWorldTarget(x, y) {
+  mouse.worldX = clamp(x, 0, WORLD.width);
+  mouse.worldY = clamp(y, 0, WORLD.height);
+  mouse.screenX = (mouse.worldX - camera.x) * WORLD.zoom;
+  mouse.screenY = (mouse.worldY - camera.y) * WORLD.zoom;
+}
+
+function aimAtNearestTouchEnemy(mx, my) {
+  let best = null;
+  let bestDistance = Infinity;
+  for (const enemy of state.enemies) {
+    if (enemy.dead) continue;
+    const d = dist(player.x, player.y, enemy.x, enemy.y);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = enemy;
+    }
+  }
+
+  if (best) {
+    setMouseWorldTarget(best.x, best.y);
+    return;
+  }
+
+  const len = Math.hypot(mx, my) || 1;
+  const ax = mx !== 0 || my !== 0 ? mx / len : player.facing;
+  const ay = mx !== 0 || my !== 0 ? my / len : 0;
+  setMouseWorldTarget(player.x + ax * 260, player.y + ay * 260);
+}
+
 function updatePlayer(dt) {
   let mx = 0;
   let my = 0;
@@ -432,7 +481,9 @@ function updatePlayer(dt) {
   player.shootAnim = Math.max(0, player.shootAnim - dt);
   player.cooldown = Math.max(0, player.cooldown - dt);
   player.invuln = Math.max(0, player.invuln - dt);
-  if ((mouse.down || keys.has('Space')) && player.cooldown <= 0) shoot();
+  const touchFire = keys.has('Space') || keys.has('KeyQ');
+  if (touchFire && !mouse.down) aimAtNearestTouchEnemy(mx, my);
+  if ((mouse.down || touchFire) && player.cooldown <= 0) shoot();
 }
 
 function movePlayerAxis(dx, dy) {

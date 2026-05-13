@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Road to Agartha - Breakthrough</title>
   <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+  <link rel="stylesheet" href="../mobile-controls.css" />
 </head>
 <body class="menu-page prelevel-page">
   <main class="prelevel-shell">
@@ -56,11 +57,29 @@
     </div>
     <div id="prelevelOverlay" class="prelevel-overlay show">
       <h1>Breakthrough</h1>
-      <p>Hold the crash zone. Move with WASD or arrows, aim with the mouse, and clear 50 enemies with the pistol before the road opens.</p>
+      <p>Hold the crash zone. Move with WASD, arrows, or touch controls. Fire clears enemies before the road opens.</p>
       <button id="preStartBtn" class="menu-button primary" type="button">Start</button>
+    </div>
+    <div class="mobile-controls" aria-label="Touch controls">
+      <p class="mobile-rotate-note">Landscape gives this one the most room.</p>
+      <div class="mobile-dpad" aria-label="Move">
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyW" aria-label="Move up">W</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyA" aria-label="Move left">A</button>
+        <button class="mobile-btn accent" type="button" data-mobile-key="KeyE" data-mobile-mode="tap" aria-label="Talk">Talk</button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyD" aria-label="Move right">D</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyS" aria-label="Move down">S</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+      </div>
+      <div class="mobile-actions" aria-label="Actions">
+        <button class="mobile-btn primary" type="button" data-mobile-key="Space" aria-label="Fire">Fire</button>
+      </div>
     </div>
   </main>
   <script src="../back-link.js"></script>
+  <script src="../mobile-controls.js"></script>
   <script src="scripts/prelevel.js"></script>
 </body>
 </html>

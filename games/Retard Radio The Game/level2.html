@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <title>Road to Agartha - Salvage</title>
   <link rel="stylesheet" href="styles/menu.css?v=menu-overhaul-11" />
+  <link rel="stylesheet" href="../mobile-controls.css" />
 </head>
 <body class="menu-page prelevel-page">
   <main class="prelevel-shell">
@@ -86,8 +87,30 @@
         <a class="menu-button ghost" href="map.html">Map</a>
       </div>
     </div>
+    <div class="mobile-controls" aria-label="Touch controls">
+      <p class="mobile-rotate-note">Landscape gives this one the most room.</p>
+      <div class="mobile-dpad" aria-label="Move">
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyW" aria-label="Move up">W</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyA" aria-label="Move left">A</button>
+        <button class="mobile-btn accent" type="button" data-mobile-key="ShiftLeft" aria-label="Dash">Dash</button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyD" aria-label="Move right">D</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyS" aria-label="Move down">S</button>
+        <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+      </div>
+      <div class="mobile-actions mobile-actions-wide" aria-label="Actions">
+        <button class="mobile-btn primary" type="button" data-mobile-key="KeyQ" aria-label="Energy shot">Shot</button>
+        <button class="mobile-btn accent" type="button" data-mobile-key="KeyJ" aria-label="Melee">Punch</button>
+        <button class="mobile-btn" type="button" data-mobile-key="Space" aria-label="Special">Special</button>
+        <button class="mobile-btn" type="button" data-mobile-key="KeyE" data-mobile-mode="tap" aria-label="Finish">Finish</button>
+        <button class="mobile-btn danger" type="button" data-mobile-key="Escape" data-mobile-mode="tap" aria-label="Pause">Pause</button>
+      </div>
+    </div>
   </main>
   <script src="../back-link.js"></script>
+  <script src="../mobile-controls.js"></script>
   <script src="scripts/save-system.js"></script>
   <script src="scripts/level2.js?v=genz-shot-small-9"></script>
 </body>

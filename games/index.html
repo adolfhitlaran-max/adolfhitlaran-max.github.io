@@ -92,6 +92,14 @@
       font-size: 0.74rem;
     }
 
+    .topnav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.6rem;
+      min-width: 0;
+    }
+
     .button {
       min-height: 2.75rem;
       display: inline-flex;
@@ -328,6 +336,23 @@
         padding: 0.9rem 0;
       }
 
+      .topnav {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+
+      .topnav .button {
+        min-height: 2.45rem;
+        padding: 0.58rem 0.7rem;
+        font-size: 0.82rem;
+      }
+
+      .topnav .button-primary {
+        grid-column: 1 / -1;
+      }
+
       .hero {
         padding: 3.4rem 0 2.4rem;
       }
@@ -344,6 +369,16 @@
         grid-template-rows: 11rem minmax(0, 1fr);
       }
     }
+
+    @media (max-width: 400px) {
+      .brand {
+        font-size: 0.82rem;
+      }
+
+      .topnav {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -353,13 +388,13 @@
         <span class="brand-mark">UM</span>
         <span>Uncensored Media</span>
       </a>
-      <div style="display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:flex-end;">
+      <nav class="topnav" aria-label="Games navigation">
         <a class="button" href="../Divided%20by%20Year/">Speeches</a>
         <a class="button" href="../pages/pdfs.html">PDFs</a>
         <a class="button" href="../pages/games.html">Leaderboard</a>
         <a class="button" href="../pages/login.html">Login</a>
         <a class="button button-primary" href="../index.html#top">Landing</a>
-      </div>
+      </nav>
     </div>
   </header>
 

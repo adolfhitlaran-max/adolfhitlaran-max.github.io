@@ -565,7 +565,7 @@ levelBackBtn.addEventListener('click', showStartMenu);
 pauseLevelSelectBtn.addEventListener('click', goToMap);
 pauseLauncherBtn.addEventListener('click', goToLauncher);
 howBtn.addEventListener('click', () => {
-  alert('Protect Ashtar while waves push in from the right. Clear waves to choose upgrades. Combos improve coin drops, hearts heal you, and green packs heal Ashtar. A/D or arrows move. W/Arrow Up jumps. Left click punches, every third punch kicks. Q shoots. Space shockwave. Shift dash. P/Esc pause. R restarts.');
+  alert('Protect Ashtar while waves push in from the right. Clear waves to choose upgrades. Combos improve coin drops, hearts heal you, and green packs heal Ashtar. Keyboard: A/D or arrows move, W/Arrow Up jumps, left click or J punches, Q shoots, Space shockwave, Shift dash, P/Esc pause, R restarts. Phone: use the on-screen move, punch, shot, shock, dash, and pause controls.');
 });
 resumeBtn.addEventListener('click', () => togglePause(false));
 restartBtnPause.addEventListener('click', restartLevel);

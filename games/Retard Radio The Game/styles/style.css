@@ -19,6 +19,7 @@ html, body {
   background: radial-gradient(circle at 50% 20%, #18213f 0%, #070914 58%, #02030a 100%);
   color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
+  overscroll-behavior: none;
 }
 
 body::before {
@@ -65,6 +66,7 @@ canvas {
   height: 100%;
   image-rendering: pixelated;
   background: #070914;
+  touch-action: none;
 }
 
 .hud {
@@ -756,5 +758,77 @@ button:focus-visible,
   .buttonRow button,
   .buttonRow .game-hub-link {
     width: 100%;
+  }
+}
+
+@media (hover: none), (pointer: coarse), (max-width: 900px) {
+  .topbar {
+    top: max(8px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    gap: 6px;
+  }
+
+  .card {
+    padding: 7px 8px;
+  }
+
+  .player-card {
+    min-width: min(58vw, 220px);
+  }
+
+  .wave-card {
+    min-width: 128px;
+  }
+
+  .labelRow {
+    gap: 5px;
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+
+  .bar {
+    height: 8px;
+    margin-bottom: 5px;
+  }
+
+  .statLine,
+  #levelText,
+  #enemyText,
+  #coinsText,
+  #upgradeText,
+  #threatText {
+    font-size: 10px;
+  }
+
+  #waveText {
+    font-size: 13px;
+  }
+
+  .abilityRail,
+  .controls,
+  .assetNote {
+    display: none;
+  }
+
+  .message {
+    z-index: 20;
+    width: calc(100% - 18px);
+    max-height: calc(100dvh - 18px);
+    padding: 16px;
+  }
+
+  .message h1 {
+    font-size: 32px;
+  }
+
+  .message p {
+    font-size: 14px;
+  }
+}
+
+@media (hover: none) and (orientation: landscape), (pointer: coarse) and (orientation: landscape) {
+  .mobile-controls.mobile-controls--side {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
   }
 }

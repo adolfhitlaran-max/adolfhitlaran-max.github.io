@@ -2,12 +2,24 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
   <title>ICE Roundup - Level</title>
   <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="../mobile-controls.css"/>
 
   <style>
-    html, body { height:100%; margin:0; background:#06090e; overflow:hidden; }
+    html, body {
+      height:100%;
+      min-height:100dvh;
+      margin:0;
+      background:#06090e;
+      overflow:hidden;
+      overscroll-behavior:none;
+      touch-action:none;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+    }
 
     /* Fullscreen shell */
     .shell{ position:fixed; inset:0; display:block; }
@@ -80,8 +92,10 @@
       position:absolute; inset:0;
       width:100vw !important;
       height:100vh !important;
+      height:100dvh !important;
       display:block;
       image-rendering: pixelated;
+      touch-action:none;
     }
 
     /* Little bottom-left hint */
@@ -107,6 +121,62 @@
       border: 1px solid rgba(255,255,255,0.14);
       background: rgba(255,255,255,0.06);
       font-weight: 900;
+    }
+
+    @media (max-width: 900px), (hover: none), (pointer: coarse) {
+      .hud {
+        padding: max(7px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 7px max(8px, env(safe-area-inset-left));
+        gap: 6px;
+      }
+
+      .hudLeft {
+        min-width: 0;
+        gap: 8px;
+      }
+
+      .brandMark {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+      }
+
+      .hudTitle h1 {
+        max-width: 13rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+      }
+
+      .hudTitle .sub {
+        display: none;
+      }
+
+      .hudMid {
+        order: 3;
+        width: 100%;
+        gap: 5px;
+      }
+
+      .badge2 {
+        padding: 5px 7px;
+        font-size: 10px;
+      }
+
+      .hudRight {
+        gap: 5px;
+      }
+
+      .hudRight .btn {
+        min-height: 34px;
+        padding: 8px 9px;
+        border-radius: 10px;
+        font-size: 11px;
+      }
+
+      .hint {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -146,10 +216,30 @@
         <span class="kbd">WASD</span> move • <span class="kbd">Shift</span> sprint • <span class="kbd">Space</span> swap weapon •
         <span class="kbd">1</span> tazer • <span class="kbd">2</span> gun • <span class="kbd">P</span> pause
       </div>
+      <div class="mobile-controls" aria-label="Touch controls">
+        <p class="mobile-rotate-note">Landscape gives this one the most room.</p>
+        <div class="mobile-dpad" aria-label="Move">
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyW" aria-label="Move up">W</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyA" aria-label="Move left">A</button>
+          <button class="mobile-btn accent" type="button" data-mobile-key="ShiftLeft" aria-label="Sprint">Run</button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyD" aria-label="Move right">D</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyS" aria-label="Move down">S</button>
+          <button class="mobile-btn blank" type="button" tabindex="-1" aria-hidden="true"></button>
+        </div>
+        <div class="mobile-actions" aria-label="Actions">
+          <button class="mobile-btn primary" type="button" data-mobile-key="KeyF" aria-label="Fire">Fire</button>
+          <button class="mobile-btn" type="button" data-mobile-key="Space" data-mobile-mode="tap" aria-label="Swap weapon">Swap</button>
+          <button class="mobile-btn" type="button" data-mobile-key="KeyP" data-mobile-mode="tap" aria-label="Pause">Pause</button>
+        </div>
+      </div>
     </main>
   </div>
 
   <script src="../back-link.js"></script>
+  <script src="../mobile-controls.js"></script>
   <script>
     /************************************************************
      * FILE:// SAFE HELPERS
@@ -694,7 +784,7 @@
      * INPUT
      ************************************************************/
     window.addEventListener("keydown", (e)=>{
-      if(["Space","KeyW","KeyA","KeyS","KeyD","Digit1","Digit2","KeyP","ShiftLeft","ShiftRight"].includes(e.code)){
+      if(["Space","KeyW","KeyA","KeyS","KeyD","KeyF","Digit1","Digit2","KeyP","ShiftLeft","ShiftRight"].includes(e.code)){
         e.preventDefault();
       }
       keys.add(e.code);
@@ -710,13 +800,32 @@
     });
     window.addEventListener("keyup", (e)=> keys.delete(e.code));
 
-    canvas.addEventListener("mousemove", (e)=>{
+    function updateMouseFromClient(clientX, clientY){
       const r = canvas.getBoundingClientRect();
-      mouse.x = (e.clientX - r.left) * (canvas.width / r.width);
-      mouse.y = (e.clientY - r.top) * (canvas.height / r.height);
-    });
+      mouse.x = (clientX - r.left) * (canvas.width / r.width);
+      mouse.y = (clientY - r.top) * (canvas.height / r.height);
+    }
+
+    function updateMouseFromPointer(e){
+      updateMouseFromClient(e.clientX, e.clientY);
+    }
+
+    canvas.addEventListener("mousemove", updateMouseFromPointer);
     canvas.addEventListener("mousedown", ()=> mouse.down = true);
     window.addEventListener("mouseup", ()=> mouse.down = false);
+
+    canvas.addEventListener("pointerdown", (e)=>{
+      if(e.pointerType === "touch") e.preventDefault();
+      updateMouseFromPointer(e);
+      mouse.down = true;
+      canvas.setPointerCapture?.(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", (e)=>{
+      if(e.pointerType === "touch") e.preventDefault();
+      updateMouseFromPointer(e);
+    });
+    window.addEventListener("pointerup", ()=> mouse.down = false);
+    window.addEventListener("pointercancel", ()=> mouse.down = false);
 
     document.getElementById("pauseBtn").addEventListener("click", togglePause);
     function togglePause(){
@@ -750,6 +859,48 @@
         playerAction.type = "shootTazer";
         animReset(playerShootTazer);
       }
+    }
+
+    function aimAtNearestMobileTarget(){
+      const preferred = player.weapon === "gun" ? "vehicle" : "foot";
+      let best = null;
+      let bestD = Infinity;
+
+      for(const e of enemies){
+        if(e.dead || e.kind !== preferred) continue;
+        const d = dist2(player.x, player.y, e.x, e.y);
+        if(d < bestD){
+          bestD = d;
+          best = e;
+        }
+      }
+
+      if(!best){
+        for(const e of enemies){
+          if(e.dead) continue;
+          const d = dist2(player.x, player.y, e.x, e.y);
+          if(d < bestD){
+            bestD = d;
+            best = e;
+          }
+        }
+      }
+
+      if(best){
+        mouse.x = best.x;
+        mouse.y = best.y;
+        return;
+      }
+
+      let mx = 0;
+      let my = 0;
+      if(keys.has("KeyW")) my -= 1;
+      if(keys.has("KeyS")) my += 1;
+      if(keys.has("KeyA")) mx -= 1;
+      if(keys.has("KeyD")) mx += 1;
+      const len = Math.hypot(mx, my) || 1;
+      mouse.x = player.x + (mx ? mx / len : 1) * 240;
+      mouse.y = player.y + (my ? my / len : 0) * 240;
     }
 
     /************************************************************
@@ -1068,7 +1219,9 @@
       player.moving = (Math.hypot(player.vx, player.vy) > 18);
       player.face = Math.atan2(mouse.y-player.y, mouse.x-player.x);
 
-      if(mouse.down && playerAction.type!=="switch"){
+      const mobileFire = keys.has("KeyF");
+      if(mobileFire) aimAtNearestMobileTarget();
+      if((mouse.down || mobileFire) && playerAction.type!=="switch"){
         if(player.weapon==="gun") fireGun();
         else fireTazer();
       }
