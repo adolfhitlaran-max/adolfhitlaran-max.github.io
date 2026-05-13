@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Voice of Uncle is an MP3 audio archive organized by year for Uncensored Media." />
+  <meta name="description" content="The Uncensored Media MP3 archive, with Voice of Uncle audio organized by year and playable in-browser." />
   <title>Voice of Uncle | MP3 Archive</title>
   <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="voice.css" />
@@ -14,14 +14,16 @@
 <body>
   <a class="skip-link" href="#archiveApp">Skip to audio archive</a>
 
-  <header class="topbar" aria-label="Voice of Uncle navigation">
+  <header class="topbar" aria-label="MP3 archive navigation">
     <a class="brand" href="../">
       <span class="brand-mark"><i data-lucide="radio"></i></span>
       <span>Uncensored Media</span>
     </a>
 
     <nav class="nav-tabs" aria-label="Primary">
-      <a class="active" href="./"><i data-lucide="headphones"></i>Voice of Uncle</a>
+      <a class="active" href="./"><i data-lucide="headphones"></i>MP3s</a>
+      <a href="../#pdfs"><i data-lucide="file-text"></i>PDFs</a>
+      <a href="../#edits"><i data-lucide="scissors"></i>Edits</a>
       <a href="../forum/"><i data-lucide="messages-square"></i>Forum</a>
       <a href="../games/"><i data-lucide="gamepad-2"></i>Gaming</a>
       <a href="../#find-me"><i data-lucide="map-pin"></i>Find Me</a>
@@ -31,19 +33,19 @@
   <main id="archiveApp">
     <section class="voice-hero" aria-labelledby="archiveTitle">
       <div class="hero-copy">
-        <p class="eyebrow">MP3 Archive / Divided by Year</p>
+        <p class="eyebrow">MP3s / Voice of Uncle</p>
         <h1 id="archiveTitle">Voice of Uncle</h1>
-        <p class="hero-lede">A year-by-year MP3 library built for quick listening, clean browsing, and direct playback from the new audio folder.</p>
+        <p class="hero-lede">A year-by-year MP3 library built for quick listening, clean browsing, and direct playback from the audio folder.</p>
       </div>
 
-      <aside class="hero-panel" aria-label="Archive tools">
+      <aside class="hero-panel" aria-label="MP3 archive tools">
         <label class="search-box">
           <i data-lucide="search"></i>
           <span class="sr-only">Search audio</span>
           <input id="searchInput" type="search" placeholder="Search titles, dates, years" autocomplete="off" />
         </label>
         <div class="hero-actions">
-          <a class="button button-primary" href="#audioLibrary"><i data-lucide="list-music"></i>Browse Audio</a>
+          <a class="button button-primary" href="#audioLibrary"><i data-lucide="list-music"></i>Browse MP3s</a>
           <button id="clearFiltersBtn" class="button button-secondary" type="button"><i data-lucide="rotate-ccw"></i>Reset</button>
         </div>
         <div class="stat-row">
@@ -56,7 +58,7 @@
 
     <section class="voice-section" aria-labelledby="voiceTitle">
       <div>
-        <p class="section-kicker">Whole section</p>
+        <p class="section-kicker">Dedicated MP3 Page</p>
         <h2 id="voiceTitle">MP3 Listening Room</h2>
       </div>
       <p>Everything inside <code>Divided by Year/audio</code> is indexed below, grouped by year, and wired into a focused audio player.</p>
@@ -71,7 +73,7 @@
         <div id="yearFilters" class="year-filters"></div>
       </aside>
 
-      <section class="track-list-panel" aria-label="Audio list">
+      <section class="track-list-panel" aria-label="MP3 list">
         <div class="list-toolbar">
           <div>
             <p class="section-kicker">Archive Index</p>
@@ -90,7 +92,7 @@
         <div id="trackList" class="track-list" aria-live="polite"></div>
       </section>
 
-      <aside class="player-panel" aria-label="Selected audio">
+      <aside class="player-panel" aria-label="Selected MP3 player">
         <div id="selectedTrack" class="selected-track"></div>
       </aside>
     </section>

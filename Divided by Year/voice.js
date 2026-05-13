@@ -115,7 +115,7 @@
     els.totalYears.textContent = populatedYears.length;
     els.totalSize.textContent = archive.totalSizeLabel || formatBytes(sumBytes(archive.tracks));
     els.visibleCount.textContent = visible.length;
-    els.listTitle.textContent = state.year === "all" ? "All Audio" : `${state.year} Audio`;
+    els.listTitle.textContent = state.year === "all" ? "All MP3s" : `${state.year} MP3s`;
   }
 
   function renderYearFilters() {
@@ -136,7 +136,7 @@
 
     const grouped = groupByYear(tracks);
     els.trackList.innerHTML = Object.entries(grouped).map(([year, items]) => `
-      <section class="year-group" aria-label="${escapeHTML(year)} audio">
+      <section class="year-group" aria-label="${escapeHTML(year)} MP3s">
         <h3 class="year-title">${escapeHTML(year)} <span class="pill">${items.length} MP3s</span></h3>
         ${items.map(renderTrackCard).join("")}
       </section>

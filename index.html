@@ -584,11 +584,135 @@
       font-weight: 800;
     }
 
+    .mp3-console {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .mp3-console h3 {
+      margin-bottom: 0;
+    }
+
+    .home-player {
+      display: grid;
+      gap: 0.75rem;
+      border-top: 1px solid rgba(245, 239, 226, 0.14);
+      padding-top: 1rem;
+    }
+
+    .home-player-top {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .home-player-top span,
+    .mp3-side-head span {
+      color: var(--amber);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .home-player-top strong {
+      color: white;
+      font-size: 1.05rem;
+      line-height: 1.2;
+    }
+
+    .home-player audio {
+      display: block;
+      width: 100%;
+    }
+
+    .home-player-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .home-player-actions .button {
+      min-height: 2.7rem;
+      padding-block: 0.62rem;
+    }
+
     .feature-side {
       display: grid;
       align-content: space-between;
       gap: 1rem;
       padding: 1.2rem;
+    }
+
+    .mp3-side-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .mp3-side-head strong {
+      color: white;
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .mp3-preview-list {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .mp3-preview-button {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.7rem;
+      border: 1px solid rgba(245, 239, 226, 0.14);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      background: rgba(5, 6, 7, 0.45);
+      color: rgba(245, 239, 226, 0.72);
+      text-align: left;
+      cursor: pointer;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .mp3-preview-button:hover,
+    .mp3-preview-button:focus-visible,
+    .mp3-preview-button.active {
+      transform: translateY(-2px);
+      border-color: rgba(0, 213, 255, 0.42);
+      background: rgba(0, 213, 255, 0.08);
+      color: white;
+      outline: none;
+    }
+
+    .mp3-preview-button span {
+      display: block;
+      overflow: hidden;
+      grid-column: 1;
+      color: inherit;
+      font-size: 0.88rem;
+      font-weight: 900;
+      line-height: 1.2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mp3-preview-button small {
+      grid-column: 1;
+      color: rgba(245, 239, 226, 0.56);
+      font-size: 0.72rem;
+      font-weight: 850;
+    }
+
+    .mp3-preview-button i {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      justify-self: end;
+      width: 1rem;
+      height: 1rem;
+      color: var(--cyan);
     }
 
     .mini-feed {
@@ -1035,8 +1159,8 @@
           <i data-lucide="menu"></i>
         </button>
 
-        <nav class="nav-tabs" aria-label="Sections">
-          <a href="Divided%20by%20Year/"><i data-lucide="headphones"></i>Voice of Uncle</a>
+      <nav class="nav-tabs" aria-label="Sections">
+        <a href="Divided%20by%20Year/"><i data-lucide="headphones"></i>MP3s</a>
           <a href="#pdfs"><i data-lucide="file-text"></i>PDFs</a>
           <a href="#edits"><i data-lucide="scissors"></i>Edits</a>
           <a href="forum/"><i data-lucide="messages-square"></i>Forum</a>
@@ -1081,10 +1205,10 @@
 
       <div class="ticker" aria-hidden="true">
         <div class="ticker-track">
-          <span><b>Voice of Uncle</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
-          <span><b>Voice of Uncle</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
-          <span><b>Voice of Uncle</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
-          <span><b>Voice of Uncle</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
+          <span><b>MP3s</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
+          <span><b>MP3s</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
+          <span><b>MP3s</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
+          <span><b>MP3s</b> PDFs <b>Edits</b> Forum <b>Gaming</b> Find Me</span>
         </div>
       </div>
 
@@ -1103,7 +1227,7 @@
           <div class="tab-console">
             <div class="tab-list" role="tablist" aria-label="Uncensored Media channels">
               <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="panel-voice" id="tab-voice" data-panel="voice">
-                <i data-lucide="headphones"></i><span>Voice of Uncle</span><small>01</small>
+                <i data-lucide="headphones"></i><span>MP3s</span><small>01</small>
               </button>
               <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-pdfs" id="tab-pdfs" data-panel="pdfs">
                 <i data-lucide="file-text"></i><span>PDFs</span><small>02</small>
@@ -1124,18 +1248,34 @@
 
             <article class="tab-panel active" id="panel-voice" role="tabpanel" aria-labelledby="tab-voice">
               <div class="feature-main" data-index="01">
-                <div class="feature-icon"><i data-lucide="headphones"></i></div>
-                <h3>Voice of Uncle</h3>
-                <p>The Divided by Year audio folder now has a searchable MP3 listening page with year filters, clean cards, and a focused player.</p>
-                <div class="feature-tags"><span>209 MP3s</span><span>20 years</span><span>Searchable</span></div>
-                <a class="button button-primary" href="Divided%20by%20Year/"><i data-lucide="headphones"></i>Open Audio</a>
+                <div class="mp3-console">
+                  <div class="feature-icon"><i data-lucide="headphones"></i></div>
+                  <div>
+                    <p class="section-kicker">Voice of Uncle</p>
+                    <h3>MP3 Archive</h3>
+                  </div>
+                  <p>The Divided by Year audio folder now sits in its own MP3 tab with a real player preview here and the full searchable archive one click away.</p>
+                  <div class="feature-tags"><span id="homeMp3Tag">209 MP3s</span><span id="homeYearTag">20 years</span><span>Player ready</span></div>
+                  <div class="home-player" aria-label="MP3 preview player">
+                    <div class="home-player-top">
+                      <span>Now Loaded</span>
+                      <strong id="homePlayerTitle">Loading MP3 archive</strong>
+                    </div>
+                    <audio id="homeAudioPlayer" controls preload="metadata"></audio>
+                    <div class="home-player-actions">
+                      <button id="homePrevTrack" class="button button-secondary" type="button"><i data-lucide="skip-back"></i>Previous</button>
+                      <button id="homeNextTrack" class="button button-secondary" type="button">Next<i data-lucide="skip-forward"></i></button>
+                      <a class="button button-primary" href="Divided%20by%20Year/"><i data-lucide="list-music"></i>Open Full Archive</a>
+                    </div>
+                  </div>
+                </div>
               </div>
               <aside class="feature-side" aria-label="Audio queue">
-                <div class="mini-feed">
-                  <div class="feed-item"><strong>Divided by Year</strong><span>Audio files indexed by folder</span></div>
-                  <div class="feed-item"><strong>Voice of Uncle</strong><span>The MP3 archive front and center</span></div>
-                  <div class="feed-item"><strong>Listen Flow</strong><span>Search, filter, select, and play</span></div>
+                <div class="mp3-side-head">
+                  <span>Preview Queue</span>
+                  <strong id="homeMp3Count">209</strong>
                 </div>
+                <div id="homeMp3List" class="mp3-preview-list" aria-label="Featured MP3 tracks"></div>
                 <div class="meter">
                   <div class="meter-row"><span>Archive</span><div class="bar"><span style="width: 96%"></span></div></div>
                   <div class="meter-row"><span>Replay</span><div class="bar"><span style="width: 88%"></span></div></div>
@@ -1252,15 +1392,15 @@
         <div class="section-inner">
           <div class="section-header">
             <div>
-              <p class="section-kicker">Voice of Uncle / MP3 Archive</p>
+              <p class="section-kicker">MP3s / Voice of Uncle</p>
               <h2 id="voice-title">Built for repeat listens</h2>
             </div>
-            <p>The Voice of Uncle page is now wired to the MP3 files inside the new audio folder, with search, year browsing, and direct playback.</p>
+            <p>The Voice of Uncle page is the full MP3 archive: search the library, browse by year, select a track, and play it without leaving the page.</p>
           </div>
 
           <div class="drop-grid">
             <a class="drop-card" href="Divided%20by%20Year/">
-              <div><i data-lucide="headphones"></i><h3>Voice of Uncle</h3><p>The MP3 archive organized by year with search, filters, and a dedicated audio player.</p></div>
+              <div><i data-lucide="headphones"></i><h3>MP3 Archive</h3><p>Voice of Uncle organized by year with search, filters, and a dedicated audio player.</p></div>
               <div class="drop-meta"><span>Audio</span><b>209 Indexed</b></div>
             </a>
             <article class="drop-card" id="pdfs">
@@ -1355,6 +1495,7 @@
   </div>
 
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="Divided%20by%20Year/audio-manifest.js"></script>
   <script>
     const iconLibraryReady = () => window.lucide && window.lucide.createIcons();
 
@@ -1399,7 +1540,6 @@
     tabButtons.forEach((button) => {
       button.addEventListener("click", () => {
         const pageRoutes = {
-          voice: "Divided%20by%20Year/",
           forum: "forum/",
           gaming: "games/"
         };
@@ -1412,6 +1552,71 @@
         activatePanel(button.dataset.panel);
       });
     });
+
+    const homeArchive = window.UNCENSORED_AUDIO_ARCHIVE || { tracks: [], years: [] };
+    const homeTracks = homeArchive.tracks.slice(0, 6);
+    const homePlayer = document.getElementById("homeAudioPlayer");
+    const homePlayerTitle = document.getElementById("homePlayerTitle");
+    const homeMp3List = document.getElementById("homeMp3List");
+    const homeMp3Count = document.getElementById("homeMp3Count");
+    const homeMp3Tag = document.getElementById("homeMp3Tag");
+    const homeYearTag = document.getElementById("homeYearTag");
+    const homePrevTrack = document.getElementById("homePrevTrack");
+    const homeNextTrack = document.getElementById("homeNextTrack");
+    let homeTrackIndex = 0;
+
+    const encodeAssetPath = (path) => String(path || "")
+      .split("/")
+      .map((part) => encodeURIComponent(part))
+      .join("/");
+
+    const setHomeTrack = (index) => {
+      if (!homeTracks.length || !homePlayer || !homePlayerTitle) return;
+      homeTrackIndex = (index + homeTracks.length) % homeTracks.length;
+      const track = homeTracks[homeTrackIndex];
+      homePlayer.src = `Divided%20by%20Year/${encodeAssetPath(track.path)}`;
+      homePlayerTitle.textContent = track.title;
+
+      [...document.querySelectorAll("[data-home-track]")].forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.homeTrack) === homeTrackIndex);
+      });
+    };
+
+    const renderHomeMp3Preview = () => {
+      if (!homePlayer || !homePlayerTitle || !homeMp3List) return;
+      const populatedYears = homeArchive.years.filter((year) => year.count > 0);
+      if (homeMp3Count) homeMp3Count.textContent = homeArchive.totalTracks || homeTracks.length;
+      if (homeMp3Tag) homeMp3Tag.textContent = `${homeArchive.totalTracks || homeTracks.length} MP3s`;
+      if (homeYearTag) homeYearTag.textContent = `${populatedYears.length} years`;
+
+      if (!homeTracks.length) {
+        homePlayerTitle.textContent = "No MP3 files indexed yet";
+        homeMp3List.innerHTML = `<div class="feed-item"><strong>No MP3s found</strong><span>Add files to Divided by Year/audio and rebuild the manifest.</span></div>`;
+        return;
+      }
+
+      homeMp3List.innerHTML = homeTracks.map((track, index) => `
+        <button class="mp3-preview-button" type="button" data-home-track="${index}">
+          <span>${track.title}</span>
+          <small>${track.year} / ${track.sizeLabel}</small>
+          <i data-lucide="play"></i>
+        </button>
+      `).join("");
+
+      homeMp3List.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-home-track]");
+        if (!button) return;
+        setHomeTrack(Number(button.dataset.homeTrack));
+        homePlayer.play().catch(() => {});
+      });
+
+      homePrevTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex - 1));
+      homeNextTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex + 1));
+      setHomeTrack(0);
+      iconLibraryReady();
+    };
+
+    renderHomeMp3Preview();
 
     const observedLinks = [...document.querySelectorAll(".nav-tabs a[href^='#']")];
     const sections = observedLinks
