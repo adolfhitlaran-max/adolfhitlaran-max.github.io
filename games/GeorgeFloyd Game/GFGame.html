@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Neon Catch — Timed 10 Levels + Power-Ups + Music/SFX</title>
+  <title>Neon Catch - Timed 10 Levels + Power-Ups + Music/SFX</title>
   <style>
     :root{
+      --app-height:100dvh;
       --text:#eaf0ff;
       --muted:#a9b6ea;
       --glass: rgba(18, 26, 56, .58);
@@ -15,6 +16,7 @@
       --shadow: 0 18px 55px rgba(0,0,0,.55);
       --neon: 0 0 18px rgba(120,160,255,.35), 0 0 45px rgba(120,160,255,.18);
     }
+    *, *::before, *::after{ box-sizing:border-box; }
     html, body{
       height:100%;
       min-height:100dvh;
@@ -34,7 +36,7 @@
       inset:0;
       width:100vw;
       height:100vh;
-      height:100dvh;
+      height:var(--app-height, 100dvh);
       display:block;
       touch-action:none;
     }
@@ -149,6 +151,7 @@
       opacity:.95;
     }
     .small{ font-size:12px; opacity:.85; }
+    .mobileHint{ display:none; }
     .overlay{
       position:fixed;
       inset:0;
@@ -237,25 +240,32 @@
     @media (max-width: 760px), (hover: none), (pointer: coarse) {
       .hud {
         top: max(8px, env(safe-area-inset-top));
-        width: calc(100vw - 12px);
+        left: 6px;
+        right: 6px;
+        width: auto;
+        transform: none;
         align-items: flex-start;
         gap: 6px;
         padding: 7px;
         border-radius: 12px;
+        overflow: hidden;
       }
 
       .hud-left,
       .hud-right {
         gap: 5px;
+        min-width: 0;
+        max-width: 100%;
       }
 
       .hud-left {
         flex: 1 1 100%;
+        width: 100%;
       }
 
       .hud-right {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         flex: 1 1 100%;
         width: 100%;
         margin-left: 0;
@@ -263,9 +273,11 @@
 
       .hud-right .btn {
         min-width: 0;
+        width: 100%;
+        padding-left: 4px;
+        padding-right: 4px;
       }
 
-      .hud-right #startBtn,
       .hud-right #restartBtn {
         display: none !important;
       }
@@ -295,10 +307,17 @@
         bottom: max(8px, env(safe-area-inset-bottom));
         width: calc(100vw - 16px);
         font-size: 11px;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
       }
 
-      .hint .small {
+      .hint .small,
+      .hint .desktopHint {
         display: none;
+      }
+
+      .hint .mobileHint {
+        display: inline;
       }
 
       .panel {
@@ -344,7 +363,7 @@
         <div class="bar"><i id="timeFill"></i></div>
       </div>
 
-      <div class="pill" id="powerPill" title="Active power-ups">Power: <b id="powerText">—</b></div>
+      <div class="pill" id="powerPill" title="Active power-ups">Power: <b id="powerText">-</b></div>
     </div>
 
     <div class="hud-right">
@@ -358,9 +377,10 @@
   <canvas id="game"></canvas>
 
   <div class="hint">
-    Move: <b>← →</b> or <b>A/D</b> or <b>drag/touch</b> • Good = <b>+5</b> (x2 with power-up) • Bad = <b>-1 life</b> • <span class="kbd">Esc</span>/<span class="kbd">P</span> pause
+    <span class="desktopHint">Tap/click to start. Drag/touch or use <b>A/D</b> / <b>&lt;- -&gt;</b>. Good = <b>+5</b>. Bad = <b>-1 life</b>.</span>
+    <span class="mobileHint">Tap to start. Drag to move.</span>
     <div class="small">
-      assets/player.png • assets/good1-4.png • assets/bad1-2.png • assets/background/1-10.png • music: assets/music/1-5.mp3
+      assets/player.png - assets/good1-4.png - assets/bad1-2.png - assets/background/1-10.png - music: assets/music/1-5.mp3
     </div>
   </div>
 
@@ -416,19 +436,24 @@
     bads:  ["assets/bad1.png","assets/bad2.png"],
     backgrounds: Array.from({length: 10}, (_, i) => `assets/background/${i+1}.png`),
 
-    // ✅ MUSIC (mp3) randomized shuffle loop
+    // MUSIC (mp3) randomized shuffle loop
     music: Array.from({length: 5}, (_, i) => `assets/music/${i+1}.mp3`)
   };
+
+  const MOBILE_ASSETS = {
+    player: "assets/mobile/player.png",
+    goods: ["assets/mobile/good1.png","assets/mobile/good2.png","assets/mobile/good3.png","assets/mobile/good4.png"],
+    bads:  ["assets/mobile/bad1.png","assets/mobile/bad2.png"],
+    backgrounds: Array.from({length: 10}, (_, i) => `assets/mobile/background/${i+1}.jpg`),
+  };
+
+  let imageAssets = ASSETS;
 
   // ---------- GAME RULES ----------
   const LEVELS = 10;
   const LEVEL_DURATION_SEC = 120;
   const START_LIVES = 3;
   const GOOD_POINTS = 5;
-  const BAD_PENALTY = 1;
-
-  const BASE_SPAWN_EVERY_MS = 320;
-  const BASE_MAX_OBJECTS = 36;
 
   const HS_KEY = "neoncatch_highscore_v1";
 
@@ -476,6 +501,28 @@
   const choice = (arr) => arr[(Math.random() * arr.length) | 0];
   const lerp = (a, b, t) => a + (b - a) * t;
 
+  function isPhoneMode(){
+    try{
+      return window.matchMedia("(max-width: 760px), (hover: none), (pointer: coarse)").matches;
+    }catch(_e){
+      return Math.min(window.innerWidth || 9999, window.innerHeight || 9999) <= 760;
+    }
+  }
+
+  function shouldUseLightAssets(){
+    const saveData = !!(navigator.connection && navigator.connection.saveData);
+    const smallViewport = Math.min(window.innerWidth || 9999, window.innerHeight || 9999) <= 760;
+    return saveData || isPhoneMode() || smallViewport;
+  }
+
+  function getViewportSize(){
+    const vv = isPhoneMode() ? window.visualViewport : null;
+    return {
+      w: Math.max(1, Math.round((vv && vv.width) || window.innerWidth || 1)),
+      h: Math.max(1, Math.round((vv && vv.height) || window.innerHeight || 1))
+    };
+  }
+
   function shuffleInPlace(a){
     for (let i=a.length-1;i>0;i--){
       const j = (Math.random()*(i+1))|0;
@@ -487,7 +534,11 @@
   function loadImage(src){
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => resolve({ img, ok:true, src });
+      img.decoding = "async";
+      img.onload = () => {
+        if (img.decode) img.decode().catch(()=>{});
+        resolve({ img, ok:true, src });
+      };
       img.onerror = () => resolve({ img:null, ok:false, src });
       img.src = src;
     });
@@ -534,7 +585,7 @@
     }
   };
 
-  music.audio.preload = "auto";
+  music.audio.preload = "metadata";
   music.audio.loop = false;
 
   function unlockAudio(){
@@ -665,35 +716,98 @@
   // ---------- VIEW (HiDPI) ----------
   const view = { w: 0, h: 0, dpr: 1 };
   function resizeCanvas(){
-    view.dpr = Math.max(1, window.devicePixelRatio || 1);
-    view.w = window.innerWidth;
-    view.h = window.innerHeight;
+    const size = getViewportSize();
+    const maxDpr = isPhoneMode() ? 1.5 : 2;
+    view.dpr = clamp(window.devicePixelRatio || 1, 1, maxDpr);
+    view.w = size.w;
+    view.h = size.h;
 
     canvas.width  = Math.floor(view.w * view.dpr);
     canvas.height = Math.floor(view.h * view.dpr);
+    if (isPhoneMode()){
+      canvas.style.width = `${view.w}px`;
+      canvas.style.height = `${view.h}px`;
+      document.documentElement.style.setProperty("--app-height", `${view.h}px`);
+    } else {
+      canvas.style.width = "";
+      canvas.style.height = "";
+      document.documentElement.style.setProperty("--app-height", "100dvh");
+    }
     ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
 
     player.y = view.h - 92;
     player.x = clamp(player.x, player.w/2 + 8, view.w - player.w/2 - 8);
+    invalidateBackgroundCache();
   }
 
   // ---------- DIFFICULTY ----------
   function getDifficulty(level){
     const t = (level - 1) / (LEVELS - 1);
+    const phone = isPhoneMode();
     return {
-      spawnEveryMs: lerp(320, 150, t),
+      spawnEveryMs: phone ? lerp(380, 215, t) : lerp(320, 150, t),
       badChance:    lerp(0.30, 0.52, t),
       powerChance:  lerp(0.06, 0.08, t),
-      speedMin:     lerp(180, 300, t),
-      speedMax:     lerp(320, 520, t),
-      maxObjects:   Math.round(lerp(36, 56, t)),
-      drift:        lerp(16, 72, t),
-      wind:         lerp(0.0, 34.0, t),
+      speedMin:     phone ? lerp(165, 265, t) : lerp(180, 300, t),
+      speedMax:     phone ? lerp(290, 450, t) : lerp(320, 520, t),
+      maxObjects:   phone ? Math.round(lerp(24, 36, t)) : Math.round(lerp(36, 56, t)),
+      drift:        phone ? lerp(10, 48, t) : lerp(16, 72, t),
+      wind:         phone ? lerp(0.0, 22.0, t) : lerp(0.0, 34.0, t),
     };
   }
 
   // ---------- STATE ----------
   let images = { player:null, goods:[], bads:[], backgrounds:[] };
+  const backgroundPromises = new Map();
+  const backgroundCache = {
+    canvas: document.createElement("canvas"),
+    ctx: null,
+    level: 0,
+    w: 0,
+    h: 0,
+    ready: false
+  };
+  backgroundCache.ctx = backgroundCache.canvas.getContext("2d");
+
+  function invalidateBackgroundCache(){
+    backgroundCache.ready = false;
+  }
+
+  function resetBackgroundSlots(){
+    images.backgrounds = Array.from({ length: imageAssets.backgrounds.length }, () => null);
+    backgroundPromises.clear();
+    invalidateBackgroundCache();
+  }
+
+  function loadBackground(index){
+    if (index < 0 || index >= imageAssets.backgrounds.length) return Promise.resolve(null);
+
+    const existing = images.backgrounds[index];
+    if (existing) return Promise.resolve(existing);
+
+    const src = imageAssets.backgrounds[index];
+    if (backgroundPromises.has(src)) return backgroundPromises.get(src);
+
+    const promise = loadImage(src).then((info) => {
+      images.backgrounds[index] = info;
+      if (index === state.level - 1) invalidateBackgroundCache();
+      return info;
+    });
+    backgroundPromises.set(src, promise);
+    return promise;
+  }
+
+  function preloadBackgroundsAroundLevel(){
+    const current = state.level - 1;
+    loadBackground(current);
+    loadBackground(current + 1);
+
+    if (!isPhoneMode()){
+      for (let i=current + 2; i<imageAssets.backgrounds.length; i++){
+        window.setTimeout(() => loadBackground(i), 220 * (i - current));
+      }
+    }
+  }
 
   const state = {
     running: false,
@@ -751,24 +865,39 @@
   };
 
   // ---------- HUD ----------
+  const hudCache = new Map();
+
+  function setTextOnce(key, el, value){
+    const next = String(value);
+    if (hudCache.get(key) === next) return;
+    hudCache.set(key, next);
+    el.textContent = next;
+  }
+
+  function setWidthOnce(key, el, value){
+    if (hudCache.get(key) === value) return;
+    hudCache.set(key, value);
+    el.style.width = value;
+  }
+
   function activePowerText(){
     const parts = [];
     if (state.power.shield > 0) parts.push("Shield");
     if (state.power.magnetT > 0) parts.push(`Magnet ${Math.ceil(state.power.magnetT)}s`);
     if (state.power.doubleT > 0) parts.push(`x2 ${Math.ceil(state.power.doubleT)}s`);
-    return parts.length ? parts.join(" • ") : "—";
+    return parts.length ? parts.join(" - ") : "-";
   }
 
   function updateHUD(){
-    ui.level.textContent = state.level;
-    ui.lives.textContent = state.lives;
-    ui.score.textContent = state.scoreTotal;
-    ui.best.textContent  = getBest();
-    ui.time.textContent  = fmtTime(state.levelTime);
+    setTextOnce("level", ui.level, state.level);
+    setTextOnce("lives", ui.lives, state.lives);
+    setTextOnce("score", ui.score, state.scoreTotal);
+    setTextOnce("best", ui.best, getBest());
+    setTextOnce("time", ui.time, fmtTime(state.levelTime));
 
     const pct = clamp((state.levelTime / 120) * 100, 0, 100);
-    ui.timeFill.style.width = pct.toFixed(1) + "%";
-    ui.powerText.textContent = activePowerText();
+    setWidthOnce("timeFill", ui.timeFill, pct.toFixed(1) + "%");
+    setTextOnce("power", ui.powerText, activePowerText());
   }
 
   // ---------- MENU / PAUSE ----------
@@ -816,6 +945,7 @@
     state.power.shield = 0;
     state.power.magnetT = 0;
     state.power.doubleT = 0;
+    state.pointerDown = false;
 
     player.x = view.w / 2;
     player.y = view.h - 92;
@@ -826,6 +956,8 @@
     ui.restartBtn.style.display = "none";
     ui.pauseBtn.textContent = "Pause";
     closeOverlay();
+    loadBackground(0);
+    preloadBackgroundsAroundLevel();
     updateHUD();
     setMusicVolume();
   }
@@ -888,6 +1020,8 @@
     state.spawnTimer = 0;
     state.transitionTimer = 1.0;
 
+    loadBackground(state.level - 1);
+    preloadBackgroundsAroundLevel();
     burst(view.w/2, view.h*0.38, 42, 560, true);
     updateHUD();
     SFX.levelUp();
@@ -896,7 +1030,7 @@
   // ---------- STARS ----------
   function initStars(){
     state.stars.length = 0;
-    const n = 80;
+    const n = isPhoneMode() ? 36 : 80;
     for (let i=0;i<n;i++){
       state.stars.push({
         x: Math.random()*view.w,
@@ -955,7 +1089,12 @@
 
   function burst(x, y, count, power, colorful){
     if (!state.settings.particles) return;
-    for (let i=0;i<count;i++){
+    const maxParticles = isPhoneMode() ? 90 : 180;
+    const scaledCount = isPhoneMode() ? Math.ceil(count * 0.55) : count;
+    const room = Math.max(0, maxParticles - state.particles.length);
+    const actualCount = Math.min(scaledCount, room);
+
+    for (let i=0;i<actualCount;i++){
       const a = Math.random()*Math.PI*2;
       const sp = rand(power*0.25, power);
       state.particles.push({
@@ -1004,7 +1143,7 @@
   }
 
   function drawPowerOrb(o){
-    const label = (o.powerId === "shield") ? "S" : (o.powerId === "magnet" ? "M" : "2×");
+    const label = (o.powerId === "shield") ? "S" : (o.powerId === "magnet" ? "M" : "2x");
     const col = (o.powerId === "shield")
       ? "rgba(120,200,255,1)"
       : (o.powerId === "magnet")
@@ -1042,33 +1181,65 @@
   }
 
   // ---------- BACKGROUND / OVERLAYS ----------
-  function drawBackground(){
+  function prepareBackgroundCache(){
+    const pad = 24;
+    const cw = Math.max(1, Math.ceil(view.w + pad * 2));
+    const ch = Math.max(1, Math.ceil(view.h + pad * 2));
+
+    if (
+      backgroundCache.ready &&
+      backgroundCache.level === state.level &&
+      backgroundCache.w === cw &&
+      backgroundCache.h === ch
+    ){
+      return;
+    }
+
+    backgroundCache.level = state.level;
+    backgroundCache.w = cw;
+    backgroundCache.h = ch;
+    backgroundCache.canvas.width = cw;
+    backgroundCache.canvas.height = ch;
+
+    const bctx = backgroundCache.ctx;
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.clearRect(0, 0, cw, ch);
+
     const bg = images.backgrounds[state.level - 1];
     if (bg && bg.ok && bg.img){
-      const cw=view.w, ch=view.h;
       const iw=bg.img.naturalWidth||cw, ih=bg.img.naturalHeight||ch;
       const scale = Math.max(cw/iw, ch/ih);
       const dw = iw*scale, dh = ih*scale;
       const dx = (cw-dw)/2, dy = (ch-dh)/2;
 
-      ctx.drawImage(bg.img, dx + state.shakeX*0.8, dy + state.shakeY*0.8, dw, dh);
+      bctx.drawImage(bg.img, dx, dy, dw, dh);
 
-      const g = ctx.createLinearGradient(0, 0, 0, ch);
+      const g = bctx.createLinearGradient(0, 0, 0, ch);
       g.addColorStop(0, "rgba(0,0,0,.08)");
       g.addColorStop(1, "rgba(0,0,0,.36)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0,0,cw,ch);
+      bctx.fillStyle = g;
+      bctx.fillRect(0,0,cw,ch);
 
-      ctx.save();
-      ctx.globalAlpha = 0.22;
-      ctx.strokeStyle = "rgba(140,190,255,.55)";
-      ctx.lineWidth = 10;
-      ctx.strokeRect(-5, -5, cw+10, ch+10);
-      ctx.restore();
+      bctx.save();
+      bctx.globalAlpha = 0.22;
+      bctx.strokeStyle = "rgba(140,190,255,.55)";
+      bctx.lineWidth = 10;
+      bctx.strokeRect(0, 0, cw, ch);
+      bctx.restore();
     } else {
-      ctx.fillStyle="#0a0f24";
-      ctx.fillRect(0,0,view.w,view.h);
+      const g = bctx.createLinearGradient(0, 0, 0, ch);
+      g.addColorStop(0, "#111a3a");
+      g.addColorStop(1, "#060911");
+      bctx.fillStyle = g;
+      bctx.fillRect(0,0,cw,ch);
     }
+
+    backgroundCache.ready = true;
+  }
+
+  function drawBackground(){
+    prepareBackgroundCache();
+    ctx.drawImage(backgroundCache.canvas, -24 + state.shakeX*0.35, -24 + state.shakeY*0.35);
   }
 
   function drawVignette(){
@@ -1261,7 +1432,7 @@
     ctx.restore();
 
     if (!state.running && !state.ended){
-      drawOverlayBox("Ready?", view.w < 520 ? "2:00 per level. Finish Level 10." : "2:00 per level • Finish Level 10 to set your Best");
+      drawOverlayBox("Ready?", view.w < 520 ? "Tap to start. Drag to move." : "2:00 per level - Finish Level 10 to set your Best");
     }
     if (state.transitionTimer > 0 && state.running && !state.ended){
       drawOverlayBox(`Level ${state.level}`, "GO GO GO.");
@@ -1329,7 +1500,8 @@
     player.x = clamp(player.x, hw + 10, view.w - hw - 10);
 
     player.trail.push({ x: player.x, y: player.y });
-    if (player.trail.length > 18) player.trail.shift();
+    const trailLimit = isPhoneMode() ? 10 : 18;
+    while (player.trail.length > trailLimit) player.trail.shift();
   }
 
   function applyPower(powerId){
@@ -1518,35 +1690,79 @@
     if (k === "arrowright" || k === "d") state.input.right = false;
   });
 
-  function pointerToCanvasX(evt){
+  window.addEventListener("blur", () => {
+    state.pointerDown = false;
+    state.input.left = false;
+    state.input.right = false;
+    state.lastTime = 0;
+  });
+
+  function pointerToCanvasX(clientX){
     const rect = canvas.getBoundingClientRect();
-    const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-    const x = (clientX - rect.left);
+    const width = Math.max(1, rect.width || view.w);
+    const x = (clientX - rect.left) * (view.w / width);
     return clamp(x, 0, view.w);
   }
 
-  canvas.addEventListener("pointerdown", (e) => {
+  function beginPointerControl(clientX){
     unlockAudio();
     startMusicIfAllowed();
 
-    canvas.setPointerCapture(e.pointerId);
     state.pointerDown = true;
-    state.pointerX = pointerToCanvasX(e);
+    state.pointerX = pointerToCanvasX(clientX);
 
     if (!state.running && !state.ended){
       startRun();
     } else if (state.ended){
       resetRun(); startRun();
     }
-  });
+  }
+
+  function endPointerControl(){
+    state.pointerDown = false;
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "touch") e.preventDefault();
+    try{
+      if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+    }catch(_err){}
+    beginPointerControl(e.clientX);
+  }, { passive:false });
 
   canvas.addEventListener("pointermove", (e) => {
     if (!state.pointerDown) return;
-    state.pointerX = pointerToCanvasX(e);
-  });
+    if (e.pointerType === "touch") e.preventDefault();
+    state.pointerX = pointerToCanvasX(e.clientX);
+  }, { passive:false });
 
-  canvas.addEventListener("pointerup", () => { state.pointerDown = false; });
-  canvas.addEventListener("pointercancel", () => { state.pointerDown = false; });
+  canvas.addEventListener("pointerup", (e) => {
+    try{
+      if (canvas.releasePointerCapture) canvas.releasePointerCapture(e.pointerId);
+    }catch(_err){}
+    endPointerControl();
+  });
+  canvas.addEventListener("pointercancel", endPointerControl);
+
+  if (!window.PointerEvent){
+    canvas.addEventListener("touchstart", (e) => {
+      const touch = e.changedTouches && e.changedTouches[0];
+      if (!touch) return;
+      e.preventDefault();
+      beginPointerControl(touch.clientX);
+    }, { passive:false });
+
+    canvas.addEventListener("touchmove", (e) => {
+      if (!state.pointerDown) return;
+      const touch = e.changedTouches && e.changedTouches[0];
+      if (!touch) return;
+      e.preventDefault();
+      state.pointerX = pointerToCanvasX(touch.clientX);
+    }, { passive:false });
+
+    canvas.addEventListener("touchend", endPointerControl, { passive:false });
+    canvas.addEventListener("touchcancel", endPointerControl, { passive:false });
+  }
 
   // ---------- UI ----------
   ui.startBtn.addEventListener("click", () => {
@@ -1597,9 +1813,9 @@
     SFX.ui();
     ui.overlaySub.textContent =
       "Power-Ups:\n" +
-      "• Shield: blocks 1 bad hit\n" +
-      "• Magnet (12s): pulls good/power-ups toward you\n" +
-      "• Double (12s): doubles points from good items\n\n" +
+      "- Shield: blocks 1 bad hit\n" +
+      "- Magnet (12s): pulls good/power-ups toward you\n" +
+      "- Double (12s): doubles points from good items\n\n" +
       "Music: assets/music/1.mp3 - 5.mp3 (shuffled forever)\n" +
       "Tip: Use Magnet to vacuum goodies during heavy waves.";
   });
@@ -1630,21 +1846,34 @@
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (!audioUnlocked) return;
     if (document.hidden){
+      state.pointerDown = false;
+      state.input.left = false;
+      state.input.right = false;
+      state.lastTime = 0;
+      if (!audioUnlocked) return;
       music.audio.volume = Math.min(music.audio.volume, 0.15);
     } else {
+      state.lastTime = 0;
+      if (!audioUnlocked) return;
       setMusicVolume();
     }
   });
 
   // ---------- INIT ----------
   async function init(){
+    imageAssets = shouldUseLightAssets() ? { ...ASSETS, ...MOBILE_ASSETS } : ASSETS;
+    resetBackgroundSlots();
+
     resizeCanvas();
-    window.addEventListener("resize", () => {
+    const handleResize = () => {
       resizeCanvas();
       initStars();
-    });
+    };
+    window.addEventListener("resize", handleResize, { passive:true });
+    if (window.visualViewport){
+      window.visualViewport.addEventListener("resize", handleResize, { passive:true });
+    }
 
     initStars();
     ui.best.textContent = getBest();
@@ -1652,19 +1881,19 @@
     ui.sfxToggle.checked = state.settings.sfx;
 
     const loaded = await Promise.all([
-      loadImage(ASSETS.player),
-      ...ASSETS.goods.map(loadImage),
-      ...ASSETS.bads.map(loadImage),
-      ...ASSETS.backgrounds.map(loadImage),
+      loadImage(imageAssets.player),
+      ...imageAssets.goods.map(loadImage),
+      ...imageAssets.bads.map(loadImage),
     ]);
 
     let idx = 0;
     images.player = loaded[idx++];
-    images.goods = loaded.slice(idx, idx + ASSETS.goods.length); idx += ASSETS.goods.length;
-    images.bads  = loaded.slice(idx, idx + ASSETS.bads.length);  idx += ASSETS.bads.length;
-    images.backgrounds = loaded.slice(idx, idx + ASSETS.backgrounds.length);
+    images.goods = loaded.slice(idx, idx + imageAssets.goods.length); idx += imageAssets.goods.length;
+    images.bads  = loaded.slice(idx, idx + imageAssets.bads.length);
 
+    await loadBackground(0);
     resetRun();
+    preloadBackgroundsAroundLevel();
     requestAnimationFrame(loop);
   }
 
