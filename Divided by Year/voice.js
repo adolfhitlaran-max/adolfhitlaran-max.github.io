@@ -115,7 +115,7 @@
     els.totalYears.textContent = populatedYears.length;
     els.totalSize.textContent = archive.totalSizeLabel || formatBytes(sumBytes(archive.tracks));
     els.visibleCount.textContent = visible.length;
-    els.listTitle.textContent = state.year === "all" ? "All MP3s" : `${state.year} MP3s`;
+    els.listTitle.textContent = state.year === "all" ? "All Speeches" : `${state.year} Speeches`;
   }
 
   function renderYearFilters() {
@@ -130,13 +130,13 @@
 
   function renderList(tracks) {
     if (!tracks.length) {
-      els.trackList.innerHTML = `<div class="empty-state">No MP3 files match that search.</div>`;
+      els.trackList.innerHTML = `<div class="empty-state">No speeches match that search.</div>`;
       return;
     }
 
     const grouped = groupByYear(tracks);
     els.trackList.innerHTML = Object.entries(grouped).map(([year, items]) => `
-      <section class="year-group" aria-label="${escapeHTML(year)} MP3s">
+      <section class="year-group" aria-label="${escapeHTML(year)} speeches">
         <h3 class="year-title">${escapeHTML(year)} <span class="pill">${items.length} MP3s</span></h3>
         ${items.map(renderTrackCard).join("")}
       </section>

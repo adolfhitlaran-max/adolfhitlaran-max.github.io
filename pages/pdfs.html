@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Uncensored Media PDF library with an in-site viewer." />
+  <title>PDFs | Uncensored Media</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050607;
+      --panel: rgba(15, 18, 20, 0.88);
+      --text: #f5efe2;
+      --muted: #b8b7ae;
+      --line: rgba(245, 239, 226, 0.15);
+      --red: #e5242a;
+      --cyan: #00d5ff;
+      --amber: #ffb83d;
+      --radius: 8px;
+      --max: 1380px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      background:
+        linear-gradient(130deg, rgba(229, 36, 42, 0.14), transparent 30rem),
+        linear-gradient(300deg, rgba(0, 213, 255, 0.12), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 4.5rem;
+      border-bottom: 1px solid var(--line);
+      padding: 0 max(1rem, calc((100vw - var(--max)) / 2));
+      background: rgba(5, 6, 7, 0.84);
+      backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--red), rgba(0, 213, 255, 0.72));
+      font-size: 0.76rem;
+      font-weight: 950;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.35rem;
+    }
+
+    .nav a {
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.5rem 0.78rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 850;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      border-color: var(--line);
+      background: rgba(245, 239, 226, 0.08);
+      color: white;
+    }
+
+    main {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 3rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: end;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(1rem, 3vw, 1.6rem);
+      margin-bottom: 1rem;
+      background:
+        linear-gradient(90deg, rgba(5, 6, 7, 0.96), rgba(5, 6, 7, 0.6)),
+        url("../assets/uncensored-media-hero.png") center / cover no-repeat;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 0.6rem;
+      color: var(--amber);
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 2.5rem;
+      height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--cyan));
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 0.6rem;
+      font-size: clamp(3rem, 7vw, 5.8rem);
+      line-height: 0.9;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      max-width: 42rem;
+      margin-bottom: 0;
+      color: rgba(245, 239, 226, 0.78);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(7rem, 1fr));
+      gap: 0.6rem;
+    }
+
+    .stat {
+      border: 1px solid rgba(245, 239, 226, 0.14);
+      border-radius: var(--radius);
+      padding: 0.8rem;
+      background: rgba(5, 6, 7, 0.62);
+    }
+
+    .stat strong,
+    .stat span {
+      display: block;
+    }
+
+    .stat strong {
+      color: white;
+      font-size: 1.4rem;
+      line-height: 1;
+    }
+
+    .stat span {
+      margin-top: 0.25rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .viewer-shell {
+      display: grid;
+      grid-template-columns: minmax(17rem, 0.33fr) minmax(0, 1fr);
+      gap: 1rem;
+      align-items: stretch;
+      min-height: calc(100svh - 12rem);
+    }
+
+    .library,
+    .viewer {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+    }
+
+    .library {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .library-head {
+      display: grid;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--line);
+      padding: 1rem;
+    }
+
+    .search {
+      width: 100%;
+      min-height: 3rem;
+      border: 1px solid rgba(245, 239, 226, 0.16);
+      border-radius: var(--radius);
+      padding: 0 0.85rem;
+      background: rgba(5, 6, 7, 0.68);
+      color: var(--text);
+      outline: none;
+    }
+
+    .search:focus {
+      border-color: rgba(0, 213, 255, 0.55);
+    }
+
+    .pdf-list {
+      display: grid;
+      align-content: start;
+      gap: 0.55rem;
+      overflow: auto;
+      padding: 0.8rem;
+    }
+
+    .pdf-button {
+      width: 100%;
+      display: grid;
+      gap: 0.3rem;
+      border: 1px solid rgba(245, 239, 226, 0.12);
+      border-radius: var(--radius);
+      padding: 0.8rem;
+      background: rgba(5, 6, 7, 0.5);
+      color: var(--muted);
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .pdf-button:hover,
+    .pdf-button:focus-visible,
+    .pdf-button.active {
+      border-color: rgba(0, 213, 255, 0.45);
+      background: rgba(0, 213, 255, 0.08);
+      color: white;
+      outline: none;
+    }
+
+    .pdf-button strong {
+      color: inherit;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .pdf-button span {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .viewer {
+      display: grid;
+      grid-template-rows: auto minmax(30rem, 1fr);
+      overflow: hidden;
+    }
+
+    .viewer-bar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 1rem;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 0.9rem;
+    }
+
+    .viewer-title {
+      min-width: 0;
+    }
+
+    .viewer-title h2 {
+      margin-bottom: 0.25rem;
+      overflow: hidden;
+      color: white;
+      font-size: 1.25rem;
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .viewer-title span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 850;
+    }
+
+    .viewer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .button {
+      min-height: 2.65rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(245, 239, 226, 0.18);
+      border-radius: 999px;
+      padding: 0.65rem 0.9rem;
+      background: rgba(245, 239, 226, 0.08);
+      color: var(--text);
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .primary {
+      border-color: transparent;
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .frame-wrap {
+      min-height: 0;
+      background: #101214;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 34rem;
+      border: 0;
+      background: #111;
+    }
+
+    .empty {
+      border: 1px dashed rgba(245, 239, 226, 0.22);
+      border-radius: var(--radius);
+      padding: 1rem;
+      color: var(--muted);
+      background: rgba(245, 239, 226, 0.04);
+    }
+
+    @media (max-width: 900px) {
+      .topbar,
+      .hero,
+      .viewer-shell,
+      .viewer-bar {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+
+      .nav,
+      .viewer-actions {
+        justify-content: start;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .viewer-shell {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html">
+      <span class="brand-mark">UM</span>
+      <span>Uncensored Media</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="../Divided%20by%20Year/">Speeches</a>
+      <a class="active" href="./pdfs.html">PDFs</a>
+      <a href="./forum.html">Forum</a>
+      <a href="./games.html">Games</a>
+      <a href="./login.html">Login</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Document Library</p>
+        <h1>PDFs</h1>
+        <p>Browse the PDF folder from inside the site with a clean library rail and an embedded reader.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong id="docCount">0</strong><span>Documents</span></div>
+        <div class="stat"><strong id="docSize">0 MB</strong><span>Indexed</span></div>
+      </div>
+    </section>
+
+    <section class="viewer-shell" aria-label="PDF library and viewer">
+      <aside class="library">
+        <div class="library-head">
+          <p class="eyebrow">Library</p>
+          <input id="searchInput" class="search" type="search" placeholder="Search PDFs" autocomplete="off" />
+        </div>
+        <div id="pdfList" class="pdf-list" aria-live="polite"></div>
+      </aside>
+
+      <section class="viewer" aria-label="Selected PDF viewer">
+        <div class="viewer-bar">
+          <div class="viewer-title">
+            <h2 id="viewerTitle">Select a PDF</h2>
+            <span id="viewerMeta">The selected document will load here.</span>
+          </div>
+          <div class="viewer-actions">
+            <a id="openPdf" class="button" href="#" target="_blank" rel="noopener">Open</a>
+            <a id="downloadPdf" class="button primary" href="#" download>Download</a>
+          </div>
+        </div>
+        <div class="frame-wrap">
+          <iframe id="pdfFrame" title="PDF viewer"></iframe>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="../js/pdfManifest.js"></script>
+  <script>
+    const library = window.UNCENSORED_PDF_LIBRARY || { documents: [] };
+    const state = {
+      query: "",
+      selectedId: library.documents[0]?.id || ""
+    };
+
+    const els = {
+      docCount: document.getElementById("docCount"),
+      docSize: document.getElementById("docSize"),
+      searchInput: document.getElementById("searchInput"),
+      pdfList: document.getElementById("pdfList"),
+      viewerTitle: document.getElementById("viewerTitle"),
+      viewerMeta: document.getElementById("viewerMeta"),
+      pdfFrame: document.getElementById("pdfFrame"),
+      openPdf: document.getElementById("openPdf"),
+      downloadPdf: document.getElementById("downloadPdf")
+    };
+
+    function assetUrl(path) {
+      return String(path || "").split("/").map((part) => encodeURIComponent(part)).join("/");
+    }
+
+    function visibleDocs() {
+      const query = state.query.toLowerCase();
+      return library.documents.filter((doc) => {
+        if (!query) return true;
+        return `${doc.title} ${doc.filename} ${doc.sizeLabel}`.toLowerCase().includes(query);
+      });
+    }
+
+    function renderList() {
+      const docs = visibleDocs();
+      if (!docs.length) {
+        els.pdfList.innerHTML = '<div class="empty">No PDFs match that search.</div>';
+        return;
+      }
+
+      els.pdfList.innerHTML = docs.map((doc) => `
+        <button class="pdf-button ${doc.id === state.selectedId ? "active" : ""}" type="button" data-pdf-id="${doc.id}">
+          <strong>${escapeHTML(doc.title)}</strong>
+          <span>${escapeHTML(doc.sizeLabel)}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderViewer() {
+      const doc = library.documents.find((item) => item.id === state.selectedId) || library.documents[0];
+      if (!doc) return;
+      state.selectedId = doc.id;
+
+      const url = assetUrl(doc.path);
+      const viewerUrl = `${url}#toolbar=0&navpanes=0`;
+      els.viewerTitle.textContent = doc.title;
+      els.viewerMeta.textContent = `${doc.filename} / ${doc.sizeLabel}`;
+      els.pdfFrame.src = viewerUrl;
+      els.openPdf.href = url;
+      els.downloadPdf.href = url;
+      els.downloadPdf.setAttribute("download", doc.filename);
+    }
+
+    function render() {
+      els.docCount.textContent = library.totalDocuments || library.documents.length;
+      els.docSize.textContent = library.totalSizeLabel || "";
+      renderList();
+      renderViewer();
+    }
+
+    function escapeHTML(value) {
+      return String(value || "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    els.searchInput.addEventListener("input", () => {
+      state.query = els.searchInput.value.trim();
+      const docs = visibleDocs();
+      if (!docs.some((doc) => doc.id === state.selectedId)) {
+        state.selectedId = docs[0]?.id || library.documents[0]?.id || "";
+      }
+      render();
+    });
+
+    els.pdfList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-pdf-id]");
+      if (!button) return;
+      state.selectedId = button.dataset.pdfId;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

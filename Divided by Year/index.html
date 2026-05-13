@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="The Uncensored Media MP3 archive, with Voice of Uncle audio organized by year and playable in-browser." />
-  <title>Voice of Uncle | MP3 Archive</title>
+  <meta name="description" content="The Uncensored Media speeches archive, with MP3 audio organized by year and playable in-browser." />
+  <title>Speeches | Uncensored Media</title>
   <link rel="preconnect" href="https://unpkg.com" />
   <link rel="stylesheet" href="voice.css" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
@@ -12,40 +12,39 @@
   <script src="voice.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#archiveApp">Skip to audio archive</a>
+  <a class="skip-link" href="#archiveApp">Skip to speeches archive</a>
 
-  <header class="topbar" aria-label="MP3 archive navigation">
+  <header class="topbar" aria-label="Speeches archive navigation">
     <a class="brand" href="../">
       <span class="brand-mark"><i data-lucide="radio"></i></span>
       <span>Uncensored Media</span>
     </a>
 
     <nav class="nav-tabs" aria-label="Primary">
-      <a class="active" href="./"><i data-lucide="headphones"></i>MP3s</a>
-      <a href="../#pdfs"><i data-lucide="file-text"></i>PDFs</a>
-      <a href="../#edits"><i data-lucide="scissors"></i>Edits</a>
-      <a href="../forum/"><i data-lucide="messages-square"></i>Forum</a>
-      <a href="../games/"><i data-lucide="gamepad-2"></i>Gaming</a>
-      <a href="../#find-me"><i data-lucide="map-pin"></i>Find Me</a>
+      <a class="active" href="./"><i data-lucide="headphones"></i>Speeches</a>
+      <a href="../pages/pdfs.html"><i data-lucide="file-text"></i>PDFs</a>
+      <a href="../pages/forum.html"><i data-lucide="messages-square"></i>Forum</a>
+      <a href="../pages/games.html"><i data-lucide="gamepad-2"></i>Games</a>
+      <a href="../pages/login.html"><i data-lucide="user-circle"></i>Login</a>
     </nav>
   </header>
 
   <main id="archiveApp">
     <section class="voice-hero" aria-labelledby="archiveTitle">
       <div class="hero-copy">
-        <p class="eyebrow">MP3s / Voice of Uncle</p>
-        <h1 id="archiveTitle">Voice of Uncle</h1>
-        <p class="hero-lede">A year-by-year MP3 library built for quick listening, clean browsing, and direct playback from the audio folder.</p>
+        <p class="eyebrow">Voice of Uncle</p>
+        <h1 id="archiveTitle">Speeches</h1>
+        <p class="hero-lede">A year-by-year MP3 speech library built for quick listening, clean browsing, and direct playback.</p>
       </div>
 
-      <aside class="hero-panel" aria-label="MP3 archive tools">
+      <aside class="hero-panel" aria-label="Speeches archive tools">
         <label class="search-box">
           <i data-lucide="search"></i>
-          <span class="sr-only">Search audio</span>
+          <span class="sr-only">Search speeches</span>
           <input id="searchInput" type="search" placeholder="Search titles, dates, years" autocomplete="off" />
         </label>
         <div class="hero-actions">
-          <a class="button button-primary" href="#audioLibrary"><i data-lucide="list-music"></i>Browse MP3s</a>
+          <a class="button button-primary" href="#audioLibrary"><i data-lucide="list-music"></i>Browse Speeches</a>
           <button id="clearFiltersBtn" class="button button-secondary" type="button"><i data-lucide="rotate-ccw"></i>Reset</button>
         </div>
         <div class="stat-row">
@@ -58,13 +57,13 @@
 
     <section class="voice-section" aria-labelledby="voiceTitle">
       <div>
-        <p class="section-kicker">Dedicated MP3 Page</p>
-        <h2 id="voiceTitle">MP3 Listening Room</h2>
+        <p class="section-kicker">Dedicated Speeches Page</p>
+        <h2 id="voiceTitle">Listening Room</h2>
       </div>
       <p>Everything inside <code>Divided by Year/audio</code> is indexed below, grouped by year, and wired into a focused audio player.</p>
     </section>
 
-    <section id="audioLibrary" class="library-shell" aria-label="Audio archive">
+    <section id="audioLibrary" class="library-shell" aria-label="Speeches archive">
       <aside class="year-rail" aria-label="Years">
         <div class="rail-head">
           <span>Years</span>
@@ -73,7 +72,7 @@
         <div id="yearFilters" class="year-filters"></div>
       </aside>
 
-      <section class="track-list-panel" aria-label="MP3 list">
+      <section class="track-list-panel" aria-label="Speeches list">
         <div class="list-toolbar">
           <div>
             <p class="section-kicker">Archive Index</p>
@@ -92,7 +91,7 @@
         <div id="trackList" class="track-list" aria-live="polite"></div>
       </section>
 
-      <aside class="player-panel" aria-label="Selected MP3 player">
+      <aside class="player-panel" aria-label="Selected speech player">
         <div id="selectedTrack" class="selected-track"></div>
       </aside>
     </section>
