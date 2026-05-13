@@ -53,7 +53,7 @@ export async function getProfile(userId) {
   if (!userId) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name, updated_at")
+    .select("id, username, display_name")
     .eq("id", userId)
     .maybeSingle();
 
@@ -68,17 +68,17 @@ export async function upsertProfile(profile) {
   const username = cleanUsername(profile.username);
   if (!username) throw new Error("Username is required.");
 
+  const displayName = String(profile.display_name || "").trim() || username;
   const payload = {
     id: user.id,
-    username,
-    display_name: String(profile.display_name || "").trim() || username,
-    updated_at: new Date().toISOString()
+    username: username,
+    display_name: displayName
   };
 
   const { data, error } = await supabase
     .from("profiles")
     .upsert(payload, { onConflict: "id" })
-    .select("id, username, display_name, updated_at")
+    .select("id, username, display_name")
     .single();
 
   if (error) throw error;
