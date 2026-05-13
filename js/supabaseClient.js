@@ -58,6 +58,7 @@ export async function getProfile(userId) {
     .maybeSingle();
 
   if (error) throw error;
+  window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: data }));
   return data;
 }
 

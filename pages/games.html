@@ -400,7 +400,7 @@
       <a href="./pdfs.html">PDFs</a>
       <a href="./forum.html">Forum</a>
       <a class="active" href="./games.html">Games</a>
-      <a href="./login.html">Login</a>
+      <a href="./login.html" data-auth-link>Login</a>
     </nav>
   </header>
 
@@ -595,5 +595,6 @@
     supabase.auth.onAuthStateChange(boot);
     boot();
   </script>
+  <script type="module" src="../js/authNav.js"></script>
 </body>
 </html>

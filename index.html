@@ -281,7 +281,7 @@
       <a href="pages/pdfs.html">PDFs</a>
       <a href="pages/forum.html">Forum</a>
       <a href="pages/games.html">Games</a>
-      <a href="pages/login.html">Login</a>
+      <a href="pages/login.html" data-auth-link>Login</a>
     </nav>
   </header>
 
@@ -360,5 +360,6 @@
       document.getElementById("pdfCount").textContent = `${pdfs.totalDocuments} PDFs`;
     }
   </script>
+  <script type="module" src="./js/authNav.js"></script>
 </body>
 </html>
