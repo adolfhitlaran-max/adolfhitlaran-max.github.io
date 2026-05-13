@@ -222,6 +222,13 @@
       margin: 0 auto;
     }
 
+    .hero-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
+      align-items: end;
+      gap: 2rem;
+    }
+
     .hero-copy {
       max-width: min(44rem, 100%);
     }
@@ -339,6 +346,66 @@
     .signal span {
       color: var(--muted);
       font-size: 0.82rem;
+    }
+
+    .hero-mp3-card {
+      display: grid;
+      gap: 0.95rem;
+      border: 1px solid rgba(245, 239, 226, 0.18);
+      border-radius: var(--radius);
+      padding: 1rem;
+      background:
+        linear-gradient(145deg, rgba(0, 213, 255, 0.14), rgba(229, 36, 42, 0.12)),
+        rgba(5, 6, 7, 0.78);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-mp3-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .hero-mp3-head span,
+    .hero-mp3-meta span {
+      color: var(--amber);
+      font-size: 0.72rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero-mp3-head strong {
+      color: white;
+      font-size: 1.65rem;
+      line-height: 1;
+    }
+
+    .hero-player-title {
+      margin: 0;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: 950;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .hero-mp3-card audio {
+      display: block;
+      width: 100%;
+    }
+
+    .hero-mp3-actions {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      gap: 0.55rem;
+    }
+
+    .hero-mp3-actions .button {
+      min-height: 2.75rem;
+      padding-block: 0.62rem;
     }
 
     .ticker {
@@ -979,6 +1046,7 @@
       }
 
       .section-header,
+      .hero-inner,
       .tab-console,
       .tab-panel,
       .link-grid {
@@ -1048,6 +1116,10 @@
 
       .hero-actions {
         align-items: stretch;
+      }
+
+      .hero-mp3-actions {
+        grid-template-columns: 1fr;
       }
 
       .button {
@@ -1181,7 +1253,8 @@
             </p>
 
             <div class="hero-actions">
-              <a class="button button-primary" href="#tabs"><i data-lucide="zap"></i>Enter the Hub</a>
+              <a class="button button-primary" href="Divided%20by%20Year/"><i data-lucide="headphones"></i>Open MP3 Player</a>
+              <a class="button button-secondary" href="#tabs"><i data-lucide="zap"></i>Enter the Hub</a>
               <a class="button button-secondary" href="#find-me"><i data-lucide="send"></i>Find Me</a>
             </div>
 
@@ -1200,6 +1273,20 @@
               </div>
             </div>
           </div>
+
+          <aside class="hero-mp3-card" aria-label="MP3 player">
+            <div class="hero-mp3-head">
+              <span>MP3s</span>
+              <strong id="heroMp3Count">209</strong>
+            </div>
+            <p id="heroPlayerTitle" class="hero-player-title">Loading MP3 archive</p>
+            <audio id="heroAudioPlayer" controls preload="metadata"></audio>
+            <div class="hero-mp3-actions">
+              <button id="heroPrevTrack" class="button button-secondary" type="button" aria-label="Previous MP3"><i data-lucide="skip-back"></i></button>
+              <button id="heroNextTrack" class="button button-secondary" type="button" aria-label="Next MP3"><i data-lucide="skip-forward"></i></button>
+              <a class="button button-primary" href="Divided%20by%20Year/"><i data-lucide="list-music"></i>Full Archive</a>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -1555,6 +1642,11 @@
 
     const homeArchive = window.UNCENSORED_AUDIO_ARCHIVE || { tracks: [], years: [] };
     const homeTracks = homeArchive.tracks.slice(0, 6);
+    const heroPlayer = document.getElementById("heroAudioPlayer");
+    const heroPlayerTitle = document.getElementById("heroPlayerTitle");
+    const heroMp3Count = document.getElementById("heroMp3Count");
+    const heroPrevTrack = document.getElementById("heroPrevTrack");
+    const heroNextTrack = document.getElementById("heroNextTrack");
     const homePlayer = document.getElementById("homeAudioPlayer");
     const homePlayerTitle = document.getElementById("homePlayerTitle");
     const homeMp3List = document.getElementById("homeMp3List");
@@ -1571,11 +1663,15 @@
       .join("/");
 
     const setHomeTrack = (index) => {
-      if (!homeTracks.length || !homePlayer || !homePlayerTitle) return;
+      if (!homeTracks.length) return;
       homeTrackIndex = (index + homeTracks.length) % homeTracks.length;
       const track = homeTracks[homeTrackIndex];
-      homePlayer.src = `Divided%20by%20Year/${encodeAssetPath(track.path)}`;
-      homePlayerTitle.textContent = track.title;
+      const source = `Divided%20by%20Year/${encodeAssetPath(track.path)}`;
+
+      if (heroPlayer) heroPlayer.src = source;
+      if (heroPlayerTitle) heroPlayerTitle.textContent = track.title;
+      if (homePlayer) homePlayer.src = source;
+      if (homePlayerTitle) homePlayerTitle.textContent = track.title;
 
       [...document.querySelectorAll("[data-home-track]")].forEach((button) => {
         button.classList.toggle("active", Number(button.dataset.homeTrack) === homeTrackIndex);
@@ -1583,33 +1679,40 @@
     };
 
     const renderHomeMp3Preview = () => {
-      if (!homePlayer || !homePlayerTitle || !homeMp3List) return;
       const populatedYears = homeArchive.years.filter((year) => year.count > 0);
+      if (heroMp3Count) heroMp3Count.textContent = homeArchive.totalTracks || homeTracks.length;
       if (homeMp3Count) homeMp3Count.textContent = homeArchive.totalTracks || homeTracks.length;
       if (homeMp3Tag) homeMp3Tag.textContent = `${homeArchive.totalTracks || homeTracks.length} MP3s`;
       if (homeYearTag) homeYearTag.textContent = `${populatedYears.length} years`;
 
       if (!homeTracks.length) {
-        homePlayerTitle.textContent = "No MP3 files indexed yet";
-        homeMp3List.innerHTML = `<div class="feed-item"><strong>No MP3s found</strong><span>Add files to Divided by Year/audio and rebuild the manifest.</span></div>`;
+        if (heroPlayerTitle) heroPlayerTitle.textContent = "No MP3 files indexed yet";
+        if (homePlayerTitle) homePlayerTitle.textContent = "No MP3 files indexed yet";
+        if (homeMp3List) {
+          homeMp3List.innerHTML = `<div class="feed-item"><strong>No MP3s found</strong><span>Add files to Divided by Year/audio and rebuild the manifest.</span></div>`;
+        }
         return;
       }
 
-      homeMp3List.innerHTML = homeTracks.map((track, index) => `
-        <button class="mp3-preview-button" type="button" data-home-track="${index}">
-          <span>${track.title}</span>
-          <small>${track.year} / ${track.sizeLabel}</small>
-          <i data-lucide="play"></i>
-        </button>
-      `).join("");
+      if (homeMp3List) {
+        homeMp3List.innerHTML = homeTracks.map((track, index) => `
+          <button class="mp3-preview-button" type="button" data-home-track="${index}">
+            <span>${track.title}</span>
+            <small>${track.year} / ${track.sizeLabel}</small>
+            <i data-lucide="play"></i>
+          </button>
+        `).join("");
 
-      homeMp3List.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-home-track]");
-        if (!button) return;
-        setHomeTrack(Number(button.dataset.homeTrack));
-        homePlayer.play().catch(() => {});
-      });
+        homeMp3List.addEventListener("click", (event) => {
+          const button = event.target.closest("[data-home-track]");
+          if (!button) return;
+          setHomeTrack(Number(button.dataset.homeTrack));
+          homePlayer?.play().catch(() => {});
+        });
+      }
 
+      heroPrevTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex - 1));
+      heroNextTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex + 1));
       homePrevTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex - 1));
       homeNextTrack?.addEventListener("click", () => setHomeTrack(homeTrackIndex + 1));
       setHomeTrack(0);
