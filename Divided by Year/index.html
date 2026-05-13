@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Uncensored Media videos organized by year in the Voice of Uncle archive." />
-  <title>Videos | Voice of Uncle</title>
+  <meta name="description" content="Voice of Uncle is an MP3 audio archive organized by year for Uncensored Media." />
+  <title>Voice of Uncle | MP3 Archive</title>
   <link rel="preconnect" href="https://unpkg.com" />
-  <link rel="stylesheet" href="archive.css" />
+  <link rel="stylesheet" href="voice.css" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <script src="archive-manifest.js" defer></script>
-  <script src="archive.js" defer></script>
+  <script src="audio-manifest.js" defer></script>
+  <script src="voice.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#archiveApp">Skip to videos</a>
+  <a class="skip-link" href="#archiveApp">Skip to audio archive</a>
 
-  <header class="topbar" aria-label="Video archive navigation">
+  <header class="topbar" aria-label="Voice of Uncle navigation">
     <a class="brand" href="../">
       <span class="brand-mark"><i data-lucide="radio"></i></span>
       <span>Uncensored Media</span>
     </a>
 
     <nav class="nav-tabs" aria-label="Primary">
-      <a class="active" href="./"><i data-lucide="play-square"></i>Videos</a>
+      <a class="active" href="./"><i data-lucide="headphones"></i>Voice of Uncle</a>
       <a href="../forum/"><i data-lucide="messages-square"></i>Forum</a>
       <a href="../games/"><i data-lucide="gamepad-2"></i>Gaming</a>
       <a href="../#find-me"><i data-lucide="map-pin"></i>Find Me</a>
@@ -29,25 +29,25 @@
   </header>
 
   <main id="archiveApp">
-    <section class="archive-hero" aria-labelledby="archiveTitle">
+    <section class="voice-hero" aria-labelledby="archiveTitle">
       <div class="hero-copy">
-        <p class="eyebrow">Videos / Divided by Year</p>
+        <p class="eyebrow">MP3 Archive / Divided by Year</p>
         <h1 id="archiveTitle">Voice of Uncle</h1>
-        <p class="hero-lede">A year-by-year video archive built for searching, scanning, and opening the right clip without digging through folders.</p>
+        <p class="hero-lede">A year-by-year MP3 library built for quick listening, clean browsing, and direct playback from the new audio folder.</p>
       </div>
 
       <aside class="hero-panel" aria-label="Archive tools">
         <label class="search-box">
           <i data-lucide="search"></i>
-          <span class="sr-only">Search videos</span>
-          <input id="searchInput" type="search" placeholder="Search dates, filenames, years" autocomplete="off" />
+          <span class="sr-only">Search audio</span>
+          <input id="searchInput" type="search" placeholder="Search titles, dates, years" autocomplete="off" />
         </label>
         <div class="hero-actions">
-          <a class="button button-primary" href="#videoLibrary"><i data-lucide="list-video"></i>Browse Videos</a>
+          <a class="button button-primary" href="#audioLibrary"><i data-lucide="list-music"></i>Browse Audio</a>
           <button id="clearFiltersBtn" class="button button-secondary" type="button"><i data-lucide="rotate-ccw"></i>Reset</button>
         </div>
         <div class="stat-row">
-          <div><strong id="totalVideos">0</strong><span>videos</span></div>
+          <div><strong id="totalTracks">0</strong><span>MP3s</span></div>
           <div><strong id="totalYears">0</strong><span>years</span></div>
           <div><strong id="totalSize">0 GB</strong><span>indexed</span></div>
         </div>
@@ -57,12 +57,12 @@
     <section class="voice-section" aria-labelledby="voiceTitle">
       <div>
         <p class="section-kicker">Whole section</p>
-        <h2 id="voiceTitle">Voice of Uncle Archive</h2>
+        <h2 id="voiceTitle">MP3 Listening Room</h2>
       </div>
-      <p>Every video currently inside <code>Divided by Year</code> is indexed below, grouped by year, with a focused player panel for quick review.</p>
+      <p>Everything inside <code>Divided by Year/audio</code> is indexed below, grouped by year, and wired into a focused audio player.</p>
     </section>
 
-    <section id="videoLibrary" class="library-shell" aria-label="Video archive">
+    <section id="audioLibrary" class="library-shell" aria-label="Audio archive">
       <aside class="year-rail" aria-label="Years">
         <div class="rail-head">
           <span>Years</span>
@@ -71,11 +71,11 @@
         <div id="yearFilters" class="year-filters"></div>
       </aside>
 
-      <section class="video-list-panel" aria-label="Video list">
+      <section class="track-list-panel" aria-label="Audio list">
         <div class="list-toolbar">
           <div>
             <p class="section-kicker">Archive Index</p>
-            <h2 id="listTitle">All Videos</h2>
+            <h2 id="listTitle">All Audio</h2>
           </div>
           <label class="sort-box">
             <span>Sort</span>
@@ -87,11 +87,11 @@
             </select>
           </label>
         </div>
-        <div id="videoList" class="video-list" aria-live="polite"></div>
+        <div id="trackList" class="track-list" aria-live="polite"></div>
       </section>
 
-      <aside class="player-panel" aria-label="Selected video">
-        <div id="selectedVideo" class="selected-video"></div>
+      <aside class="player-panel" aria-label="Selected audio">
+        <div id="selectedTrack" class="selected-track"></div>
       </aside>
     </section>
   </main>
