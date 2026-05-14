@@ -19,6 +19,8 @@ window.UMSupabase = {
 
 const PROFILE_COLUMNS = "id, username, display_name, avatar_url, bio, created_at, updated_at";
 const BASE_PROFILE_COLUMNS = "id, username, display_name, created_at, updated_at";
+const FORUM_POST_COLUMNS = "id, user_id, title, body, created_at, updated_at";
+const FORUM_COMMENT_COLUMNS = "id, post_id, user_id, body, created_at, updated_at";
 
 function withQueryTimeout(promise, ms, message) {
   let timeoutId;
@@ -228,16 +230,67 @@ export async function getProfilesForUserIds(userIds) {
     error = fallback.error;
   }
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase profile batch lookup failed:", error);
+    throw error;
+  }
   return new Map((data || []).map((profile) => {
     const normalized = normalizeProfile(profile);
     return [normalized.id, normalized];
   }));
 }
 
-export async function createPost({ title, body }) {
+async function getCurrentPostingProfile(action) {
   const user = await getCurrentUser();
-  if (!user) throw new Error("You need to be logged in to post.");
+  if (!user) throw new Error(`You need to be logged in to ${action}.`);
+
+  let profile = null;
+  try {
+    profile = await getProfile(user.id);
+  } catch (error) {
+    console.error("Supabase posting profile lookup failed:", error);
+    throw error;
+  }
+
+  if (!profile?.username) {
+    throw new Error("Create a username on your profile before posting.");
+  }
+
+  return { user, profile };
+}
+
+async function attachForumAuthors(rows) {
+  const profiles = await getProfilesForUserIds((rows || []).map((row) => row.user_id));
+  return (rows || []).map((row) => ({
+    ...row,
+    author: profiles.get(row.user_id) || null
+  }));
+}
+
+async function getCommentCounts(postIds) {
+  const uniqueIds = [...new Set((postIds || []).filter(Boolean))];
+  const counts = new Map(uniqueIds.map((id) => [id, 0]));
+  if (!uniqueIds.length) return counts;
+
+  const { data, error } = await supabase
+    .from("forum_comments")
+    .select("post_id")
+    .in("post_id", uniqueIds);
+
+  if (error) {
+    console.error("Supabase forum comment counts failed:", error);
+    throw error;
+  }
+
+  (data || []).forEach((comment) => {
+    counts.set(comment.post_id, (counts.get(comment.post_id) || 0) + 1);
+  });
+
+  return counts;
+}
+
+export async function createPost({ title, body }) {
+  const { user } = await getCurrentPostingProfile("post");
 
   const payload = {
     user_id: user.id,
@@ -252,27 +305,108 @@ export async function createPost({ title, body }) {
   const { data, error } = await supabase
     .from("forum_posts")
     .insert(payload)
-    .select("id, user_id, title, body, created_at")
+    .select(FORUM_POST_COLUMNS)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase forum post insert failed:", error);
+    throw error;
+  }
   return data;
 }
 
 export async function listPosts() {
   const { data, error } = await supabase
     .from("forum_posts")
-    .select("id, user_id, title, body, created_at")
+    .select(FORUM_POST_COLUMNS)
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase forum posts lookup failed:", error);
+    throw error;
+  }
 
-  const profiles = await getProfilesForUserIds((data || []).map((post) => post.user_id));
-  return (data || []).map((post) => ({
+  const [posts, commentCounts] = await Promise.all([
+    attachForumAuthors(data || []),
+    getCommentCounts((data || []).map((post) => post.id))
+  ]);
+
+  return posts.map((post) => ({
     ...post,
-    author: profiles.get(post.user_id) || null
+    comment_count: commentCounts.get(post.id) || 0
   }));
+}
+
+export async function getPost(postId) {
+  const id = Number.parseInt(postId, 10);
+  if (!Number.isFinite(id)) throw new Error("Post id is invalid.");
+
+  const { data: post, error: postError } = await supabase
+    .from("forum_posts")
+    .select(FORUM_POST_COLUMNS)
+    .eq("id", id)
+    .single();
+
+  if (postError) {
+    console.error("Supabase forum post detail lookup failed:", postError);
+    throw postError;
+  }
+
+  const { data: comments, error: commentsError } = await supabase
+    .from("forum_comments")
+    .select(FORUM_COMMENT_COLUMNS)
+    .eq("post_id", id)
+    .order("created_at", { ascending: true });
+
+  if (commentsError) {
+    console.error("Supabase forum comments lookup failed:", commentsError);
+    throw commentsError;
+  }
+
+  const profiles = await getProfilesForUserIds([
+    post.user_id,
+    ...(comments || []).map((comment) => comment.user_id)
+  ]);
+
+  return {
+    ...post,
+    author: profiles.get(post.user_id) || null,
+    comments: (comments || []).map((comment) => ({
+      ...comment,
+      author: profiles.get(comment.user_id) || null
+    }))
+  };
+}
+
+export async function createComment({ postId, body }) {
+  const { user } = await getCurrentPostingProfile("comment");
+  const id = Number.parseInt(postId, 10);
+  const text = String(body || "").trim();
+
+  if (!Number.isFinite(id)) throw new Error("Post id is invalid.");
+  if (!text) throw new Error("Comment body is required.");
+
+  const { data, error } = await supabase
+    .from("forum_comments")
+    .insert({
+      post_id: id,
+      user_id: user.id,
+      body: text
+    })
+    .select(FORUM_COMMENT_COLUMNS)
+    .single();
+
+  if (error) {
+    console.error("Supabase forum comment insert failed:", error);
+    throw error;
+  }
+
+  const profiles = await getProfilesForUserIds([data.user_id]);
+  return {
+    ...data,
+    author: profiles.get(data.user_id) || null
+  };
 }
 
 export async function submitScore({ game, score }) {
