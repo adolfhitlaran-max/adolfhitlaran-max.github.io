@@ -210,7 +210,7 @@
 
     .game-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
       gap: 1rem;
     }
 
@@ -467,6 +467,23 @@
               <div class="game-actions">
                 <a class="button button-primary" href="Retard%20Radio%20The%20Game/launcher.html">Launch</a>
                 <a class="button" href="Retard%20Radio%20The%20Game/map.html">Map</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="game-card">
+            <div class="game-media">
+              <img src="conspiracy-pictionary/thumbnail.svg" alt="" />
+            </div>
+            <div class="game-body">
+              <div>
+                <h3>Conspiracy Pictionary</h3>
+                <p>A live two-player drawing room with Supabase realtime, profile names, guessing, and automatic match scoring.</p>
+                <div class="tag-row"><span>Drawing</span><span>Realtime</span><span>Profiles</span></div>
+              </div>
+              <div class="game-actions">
+                <a class="button button-primary" href="conspiracy-pictionary/pictionary.html">Play</a>
+                <a class="button" href="../pages/games.html">Leaderboard</a>
               </div>
             </div>
           </article>

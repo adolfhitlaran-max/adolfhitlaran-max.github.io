@@ -35,12 +35,14 @@ const GAME_SCORE_ALIASES = {
   "ICE Roundup": ["ICE Roundup", "ICEGame"],
   ICEGame: ["ICE Roundup", "ICEGame"],
   "Road to Agartha": ["Road to Agartha", "Retard Radio The Game"],
-  "Retard Radio The Game": ["Road to Agartha", "Retard Radio The Game"]
+  "Retard Radio The Game": ["Road to Agartha", "Retard Radio The Game"],
+  "Conspiracy Pictionary": ["Conspiracy Pictionary", "conspiracy-pictionary"]
 };
 const GAME_SCORE_LABELS = {
   "George Floyd Game": "Neon Catch",
   ICEGame: "ICE Roundup",
-  "Retard Radio The Game": "Road to Agartha"
+  "Retard Radio The Game": "Road to Agartha",
+  "conspiracy-pictionary": "Conspiracy Pictionary"
 };
 
 function withQueryTimeout(promise, ms, message) {

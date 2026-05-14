@@ -1,0 +1,584 @@
+:root {
+  color-scheme: dark;
+  --bg: #050607;
+  --panel: rgba(14, 17, 20, 0.92);
+  --panel-2: rgba(245, 239, 226, 0.055);
+  --text: #f5efe2;
+  --muted: #b8b7ae;
+  --line: rgba(245, 239, 226, 0.16);
+  --red: #e5242a;
+  --cyan: #00d5ff;
+  --amber: #ffb83d;
+  --green: #8fff6f;
+  --radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+  background:
+    linear-gradient(130deg, rgba(229, 36, 42, 0.14), transparent 30rem),
+    linear-gradient(300deg, rgba(0, 213, 255, 0.12), transparent 30rem),
+    var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.siteTop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  min-height: 3.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: max(0.6rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.6rem max(7.4rem, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--line);
+  background: rgba(5, 6, 7, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.brandLink,
+.siteTop nav a {
+  min-width: 0;
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 239, 226, 0.16);
+  border-radius: 999px;
+  padding: 0.45rem 0.72rem;
+  background: rgba(245, 239, 226, 0.07);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.siteTop nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.siteTop [data-auth-link] {
+  display: none;
+}
+
+.screen {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5.5rem 1rem 1rem;
+}
+
+.menuBox {
+  width: min(31rem, calc(100vw - 2rem));
+  max-width: 100%;
+  display: grid;
+  gap: 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(1rem, 4vw, 1.5rem);
+  background:
+    linear-gradient(180deg, rgba(245, 239, 226, 0.08), rgba(245, 239, 226, 0.03)),
+    rgba(5, 6, 7, 0.74);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.um-score-widget {
+  top: auto !important;
+  left: auto !important;
+  right: max(0.75rem, env(safe-area-inset-right)) !important;
+  bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+}
+
+.brand {
+  font-size: clamp(2.25rem, 10vw, 4.8rem);
+  line-height: 0.86;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.tagline,
+.smallNote {
+  margin: 0;
+  color: rgba(245, 239, 226, 0.72);
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.smallNote {
+  font-size: 0.86rem;
+}
+
+.profile-card,
+#roomStatus {
+  border: 1px solid rgba(255, 184, 61, 0.28);
+  border-radius: var(--radius);
+  padding: 0.78rem;
+  background: rgba(255, 184, 61, 0.08);
+  color: rgba(245, 239, 226, 0.82);
+}
+
+.profile-card {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.profile-card strong {
+  color: #fff;
+}
+
+.profile-card span,
+#profileDetail {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.profile-card.ok,
+#roomStatus.ok {
+  border-color: rgba(143, 255, 111, 0.35);
+  background: rgba(143, 255, 111, 0.08);
+}
+
+.profile-card.error,
+#roomStatus.error {
+  border-color: rgba(229, 36, 42, 0.45);
+  background: rgba(229, 36, 42, 0.1);
+}
+
+.inline-link {
+  color: #fff;
+  font-weight: 950;
+  text-decoration: underline;
+}
+
+label {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  min-height: 3.05rem;
+  border: 1px solid rgba(245, 239, 226, 0.16);
+  border-radius: var(--radius);
+  padding: 0 0.85rem;
+  background: rgba(5, 6, 7, 0.68);
+  color: var(--text);
+  outline: none;
+}
+
+input:focus {
+  border-color: rgba(0, 213, 255, 0.62);
+}
+
+button {
+  min-height: 3rem;
+  border: 1px solid rgba(245, 239, 226, 0.18);
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  background: rgba(245, 239, 226, 0.08);
+  color: var(--text);
+  font-weight: 950;
+  cursor: pointer;
+}
+
+button:not(:disabled):hover {
+  border-color: rgba(0, 213, 255, 0.5);
+}
+
+button:disabled {
+  opacity: 0.45;
+  color: rgba(245, 239, 226, 0.82);
+  cursor: not-allowed;
+}
+
+.menuButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+#createRoomBtn,
+#sendGuessBtn {
+  border-color: transparent;
+  background: var(--text);
+  color: var(--bg);
+}
+
+#gameScreen {
+  height: 100dvh;
+  padding-top: 3.8rem;
+}
+
+#topBar {
+  min-height: 4.1rem;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 5rem minmax(16rem, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem max(0.9rem, env(safe-area-inset-right)) 0.55rem max(0.9rem, env(safe-area-inset-left));
+  background: rgba(9, 11, 13, 0.92);
+}
+
+.room-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+#roomCodeDisplay {
+  color: #fff;
+  letter-spacing: 0.12em;
+}
+
+#copyRoomBtn {
+  min-height: 2rem;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+#timer {
+  justify-self: center;
+  width: 4.2rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 184, 61, 0.36);
+  border-radius: var(--radius);
+  color: var(--amber);
+  background: rgba(255, 184, 61, 0.08);
+  font-size: 1.65rem;
+  font-weight: 950;
+}
+
+#scoreboard {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-weight: 950;
+  flex-wrap: wrap;
+}
+
+#player1Name,
+#player2Name {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+}
+
+#player1Score,
+#player2Score {
+  color: var(--green);
+}
+
+#matchTarget {
+  width: 100%;
+  color: rgba(245, 239, 226, 0.58);
+  text-align: right;
+}
+
+#mainArea {
+  height: calc(100dvh - 7.9rem);
+  display: grid;
+  grid-template-columns: 18rem minmax(0, 1fr) 20rem;
+  min-height: 0;
+}
+
+#leftPanel,
+#rightPanel {
+  display: grid;
+  align-content: start;
+  gap: 0.8rem;
+  min-height: 0;
+  overflow: auto;
+  border-color: var(--line);
+  background: rgba(5, 6, 7, 0.54);
+  padding: 0.8rem;
+}
+
+#leftPanel {
+  border-right: 1px solid var(--line);
+}
+
+#rightPanel {
+  border-left: 1px solid var(--line);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem;
+  background: var(--panel);
+}
+
+.panel h3 {
+  margin: 0 0 0.6rem;
+  color: var(--cyan);
+  font-size: 0.78rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#roleDisplay {
+  font-size: 1.55rem;
+  font-weight: 950;
+}
+
+#secretTheory {
+  color: var(--amber);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.32;
+}
+
+.toolRow {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+#clearCanvasBtn,
+#newRoundBtn {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+#canvasArea {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 0.9rem;
+  background:
+    linear-gradient(45deg, rgba(245, 239, 226, 0.04) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(245, 239, 226, 0.04) 25%, transparent 25%),
+    #171a1e;
+  background-size: 34px 34px;
+}
+
+#drawingCanvas {
+  width: min(100%, calc((100dvh - 10rem) * 1.6667));
+  height: auto;
+  max-height: calc(100dvh - 10rem);
+  display: block;
+  border: 4px solid rgba(245, 239, 226, 0.22);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+}
+
+#drawingCanvas.can-draw {
+  cursor: crosshair;
+}
+
+#guessLog {
+  height: calc(100dvh - 18rem);
+  min-height: 14rem;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  border: 1px solid rgba(245, 239, 226, 0.12);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  background: rgba(5, 6, 7, 0.42);
+}
+
+.guess {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid rgba(245, 239, 226, 0.1);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  background: var(--panel-2);
+  color: rgba(245, 239, 226, 0.82);
+  line-height: 1.35;
+}
+
+.correctGuess {
+  border-color: rgba(143, 255, 111, 0.35);
+  background: rgba(143, 255, 111, 0.1);
+}
+
+.mark-correct {
+  min-height: 2rem;
+  justify-self: start;
+  padding: 0.35rem 0.65rem;
+  color: var(--bg);
+  background: var(--green);
+}
+
+#guessArea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+@media (max-width: 1050px) {
+  body {
+    overflow: auto;
+  }
+
+  #gameScreen {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  #topBar,
+  #mainArea {
+    display: grid;
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  #topBar {
+    padding-top: 0.75rem;
+  }
+
+  #scoreboard,
+  #matchTarget {
+    justify-self: stretch;
+    text-align: left;
+  }
+
+  #leftPanel,
+  #rightPanel {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid var(--line);
+    overflow: visible;
+  }
+
+  #canvasArea {
+    min-height: 28rem;
+    order: 2;
+  }
+
+  #leftPanel {
+    order: 1;
+  }
+
+  #rightPanel {
+    order: 3;
+  }
+
+  #drawingCanvas {
+    width: min(96vw, 1000px);
+    max-height: none;
+  }
+
+  #guessLog {
+    height: 14rem;
+  }
+}
+
+@media (max-width: 620px) {
+  .siteTop {
+    align-items: center;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding-left: max(5.2rem, env(safe-area-inset-left));
+  }
+
+  .siteTop nav {
+    flex: 1 1 auto;
+    width: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .siteTop nav a[href*="profile"] {
+    display: none;
+  }
+
+  .siteTop nav a,
+  .brandLink {
+    min-height: 2.1rem;
+    padding: 0.4rem 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .screen {
+    padding-top: 4.8rem;
+  }
+
+  .menuBox {
+    width: calc(100vw - 3rem);
+  }
+
+  .brand {
+    font-size: clamp(2rem, 8.8vw, 3.2rem);
+  }
+
+  .tagline,
+  .smallNote {
+    justify-self: start;
+    width: min(100%, 16rem);
+  }
+
+  #gameScreen {
+    padding-top: 4.6rem;
+  }
+
+  .menuButtons,
+  #guessArea {
+    grid-template-columns: 1fr;
+  }
+
+  #canvasArea {
+    min-height: 21rem;
+    padding: 0.5rem;
+  }
+}
