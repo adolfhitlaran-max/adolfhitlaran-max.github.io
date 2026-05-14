@@ -24,9 +24,11 @@ const BASE_PROFILE_COLUMNS = "id, username, display_name, created_at, updated_at
 const FORUM_POST_COLUMNS = "id, user_id, title, body, created_at, updated_at";
 const FORUM_COMMENT_COLUMNS = "id, post_id, user_id, body, created_at, updated_at";
 const SUPABASE_REF = "dbkrtdzppymjxutivsmo";
+const AVATAR_BUCKET = "avatars";
 const AUTH_TIMEOUT_MS = 7000;
 const SESSION_TIMEOUT_MS = 2500;
 const QUERY_TIMEOUT_MS = 7000;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 function withQueryTimeout(promise, ms, message) {
   let timeoutId;
@@ -292,6 +294,49 @@ export async function upsertProfile(profile, options = {}) {
   const normalized = normalizeProfile(data);
   window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: normalized }));
   return normalized;
+}
+
+export async function uploadAvatar(file) {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("You need to be logged in to upload an avatar.");
+  if (!file) throw new Error("Choose an image before uploading.");
+  if (!/^image\//i.test(file.type || "")) throw new Error("Avatar must be an image file.");
+  if (file.size > MAX_AVATAR_BYTES) throw new Error("Avatar image must be 5MB or smaller.");
+
+  const extension = (file.name || "avatar")
+    .split(".")
+    .pop()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 8) || "jpg";
+  const path = `${user.id}/avatar-${Date.now()}.${extension}`;
+
+  const { error } = await withQueryTimeout(
+    supabase.storage
+      .from(AVATAR_BUCKET)
+      .upload(path, file, {
+        cacheControl: "3600",
+        contentType: file.type || "image/jpeg",
+        upsert: true
+      }),
+    QUERY_TIMEOUT_MS,
+    "Avatar upload timed out."
+  );
+
+  if (error) {
+    console.error("Supabase avatar upload failed:", error);
+    throw new Error(`Avatar upload failed: ${error.message}`);
+  }
+
+  const { data } = supabase.storage
+    .from(AVATAR_BUCKET)
+    .getPublicUrl(path);
+
+  if (!data?.publicUrl) {
+    throw new Error("Avatar uploaded, but Supabase did not return a public URL.");
+  }
+
+  return `${data.publicUrl}?v=${Date.now()}`;
 }
 
 export async function getProfilesForUserIds(userIds) {

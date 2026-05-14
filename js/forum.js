@@ -18,6 +18,7 @@ const els = {
   postTitle: document.getElementById("postTitle"),
   postBody: document.getElementById("postBody"),
   postList: document.getElementById("postList"),
+  sortMode: document.getElementById("sortMode"),
   refreshBtn: document.getElementById("refreshBtn"),
   detailPlaceholder: document.getElementById("detailPlaceholder"),
   detailContent: document.getElementById("detailContent"),
@@ -36,6 +37,7 @@ const els = {
 let currentUser = null;
 let currentProfile = null;
 let activePostId = null;
+let lastPosts = [];
 let authProfileError = false;
 let pageLoading = true;
 let lastAuthState = {
@@ -172,6 +174,31 @@ function updatePostSelection() {
   });
 }
 
+function sortedPosts(posts) {
+  const copy = [...posts];
+  if (els.sortMode.value === "comments") {
+    return copy.sort((a, b) => Number(b.comment_count || 0) - Number(a.comment_count || 0));
+  }
+
+  if (els.sortMode.value === "old") {
+    return copy.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
+
+  return copy.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+}
+
+function renderPostList(posts) {
+  const sorted = sortedPosts(posts);
+  if (!sorted.length) {
+    renderEmpty(els.postList, "No posts yet. Start the first thread.");
+    showDetailPlaceholder("Open a post to read the thread.");
+    return;
+  }
+
+  els.postList.replaceChildren(...sorted.map(renderPostCard));
+  updatePostSelection();
+}
+
 function updateCommentFormState() {
   const canComment = !!activePostId && !!currentProfile?.username;
   els.commentBody.disabled = !canComment;
@@ -189,10 +216,33 @@ function updateCommentFormState() {
 }
 
 function renderPostCard(post) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "post-card";
-  button.dataset.postId = post.id;
+  const article = document.createElement("article");
+  article.className = "post-card";
+  article.dataset.postId = post.id;
+  article.tabIndex = 0;
+  article.setAttribute("role", "button");
+  article.setAttribute("aria-label", `Open ${post.title || "thread"}`);
+
+  const rail = document.createElement("div");
+  rail.className = "thread-rail";
+
+  const count = document.createElement("strong");
+  appendText(count, String(Number(post.comment_count || 0)));
+  const countLabel = document.createElement("span");
+  appendText(countLabel, Number(post.comment_count || 0) === 1 ? "reply" : "replies");
+  rail.append(count, countLabel);
+
+  const content = document.createElement("div");
+  content.className = "post-content";
+
+  const subline = document.createElement("div");
+  subline.className = "post-subline";
+
+  const authorName = document.createElement("span");
+  appendText(authorName, `u/${post.author?.username || "anonymous"}`);
+  const time = document.createElement("span");
+  appendText(time, formatDate(post.created_at));
+  subline.append(authorName, time);
 
   const author = document.createElement("div");
   author.className = "author-row";
@@ -212,16 +262,26 @@ function renderPostCard(post) {
   const footer = document.createElement("div");
   footer.className = "post-footer";
 
-  const time = document.createElement("span");
-  appendText(time, formatDate(post.created_at));
   const comments = document.createElement("span");
   comments.className = "pill";
   appendText(comments, commentLabel(post.comment_count));
+  const hint = document.createElement("span");
+  hint.className = "open-hint";
+  appendText(hint, "Open thread");
 
-  footer.append(time, comments);
-  button.append(author, title, preview, footer);
-  button.addEventListener("click", () => openPost(post.id));
-  return button;
+  footer.append(comments, hint);
+  content.append(subline, author, title, preview, footer);
+  article.append(rail, content);
+  article.addEventListener("click", (event) => {
+    if (event.target.closest("a")) return;
+    openPost(post.id);
+  });
+  article.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openPost(post.id);
+  });
+  return article;
 }
 
 function renderEmpty(target, text) {
@@ -362,15 +422,10 @@ async function refreshPosts() {
   try {
     renderEmpty(els.postList, "Loading forum posts...");
     const posts = await listPosts();
+    lastPosts = posts;
     completed = true;
     window.clearTimeout(loadingTimeout);
-    if (!posts.length) {
-      renderEmpty(els.postList, "No posts yet. Start the first thread.");
-      showDetailPlaceholder("Open a post to read the thread.");
-    } else {
-      els.postList.replaceChildren(...posts.map(renderPostCard));
-      updatePostSelection();
-    }
+    renderPostList(posts);
 
     if (authProfileError) return;
     if (!currentUser) {
@@ -485,5 +540,6 @@ els.commentForm.addEventListener("submit", async (event) => {
 });
 
 els.refreshBtn.addEventListener("click", refreshPosts);
+els.sortMode.addEventListener("change", () => renderPostList(lastPosts));
 supabase.auth.onAuthStateChange(() => refreshProfile());
 boot();

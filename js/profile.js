@@ -6,6 +6,7 @@ import {
   getProfile,
   getProfileByUsername,
   getUserActivity,
+  uploadAvatar,
   upsertProfile
 } from "./supabaseClient.js";
 
@@ -20,6 +21,9 @@ const els = {
   bio: document.getElementById("profileBio"),
   joined: document.getElementById("profileJoined"),
   activitySummary: document.getElementById("activitySummary"),
+  profilePostCount: document.getElementById("profilePostCount"),
+  profileCommentCount: document.getElementById("profileCommentCount"),
+  profileScoreCount: document.getElementById("profileScoreCount"),
   postsList: document.getElementById("postsList"),
   commentsList: document.getElementById("commentsList"),
   scoresList: document.getElementById("scoresList"),
@@ -31,11 +35,16 @@ const els = {
   editDisplayName: document.getElementById("editDisplayName"),
   editAvatarUrl: document.getElementById("editAvatarUrl"),
   editBio: document.getElementById("editBio"),
+  avatarFile: document.getElementById("avatarFile"),
+  avatarUploadPreview: document.getElementById("avatarUploadPreview"),
+  avatarUploadFallback: document.getElementById("avatarUploadFallback"),
+  avatarUploadStatus: document.getElementById("avatarUploadStatus"),
   setupPanel: document.getElementById("setupPanel")
 };
 
 let currentUser = null;
 let activeProfile = null;
+let pendingAvatarObjectUrl = "";
 let pageLoading = true;
 let lastAuthState = {
   user: null,
@@ -56,6 +65,8 @@ function fillEditForm(profile = {}) {
   els.editDisplayName.value = profile.display_name || "";
   els.editAvatarUrl.value = profile.avatar_url || "";
   els.editBio.value = profile.bio || "";
+  els.avatarFile.value = "";
+  updateUploadPreview(profile.avatar_url || "", "No upload selected.");
 }
 
 function setMessage(text, type = "") {
@@ -102,6 +113,26 @@ function avatarUrl(profile) {
     if (url.protocol === "http:" || url.protocol === "https:") return value;
   } catch (_error) {}
   return "";
+}
+
+function updateUploadPreview(url, status) {
+  if (pendingAvatarObjectUrl) {
+    URL.revokeObjectURL(pendingAvatarObjectUrl);
+    pendingAvatarObjectUrl = "";
+  }
+
+  if (url) {
+    els.avatarUploadPreview.src = url;
+    els.avatarUploadPreview.hidden = false;
+    els.avatarUploadFallback.hidden = true;
+  } else {
+    els.avatarUploadPreview.removeAttribute("src");
+    els.avatarUploadPreview.hidden = true;
+    els.avatarUploadFallback.hidden = false;
+    els.avatarUploadFallback.textContent = initials(activeProfile || { username: els.editUsername.value || "UM" });
+  }
+
+  els.avatarUploadStatus.textContent = status;
 }
 
 function profileLink(profile) {
@@ -197,6 +228,9 @@ async function renderActivity(profile) {
     const commentCount = activity.comments.length;
     const scoreCount = activity.scores.length;
     els.activitySummary.textContent = `${postCount} recent posts / ${commentCount} recent comments / ${scoreCount} recent scores`;
+    els.profilePostCount.textContent = postCount;
+    els.profileCommentCount.textContent = commentCount;
+    els.profileScoreCount.textContent = scoreCount;
 
     renderList(
       els.postsList,
@@ -228,6 +262,9 @@ async function renderActivity(profile) {
   } catch (error) {
     console.error("Profile activity load failed:", error);
     els.activitySummary.textContent = "Activity could not be loaded.";
+    els.profilePostCount.textContent = "0";
+    els.profileCommentCount.textContent = "0";
+    els.profileScoreCount.textContent = "0";
     const note = document.createElement("div");
     note.className = "notice error";
     note.textContent = error.message;
@@ -291,10 +328,19 @@ els.editForm.addEventListener("submit", async (event) => {
   }
 
   try {
+    let avatarUrl = els.editAvatarUrl.value;
+    const avatarFile = els.avatarFile.files?.[0] || null;
+    if (avatarFile) {
+      setMessage("Uploading profile picture...", "");
+      els.editForm.querySelector("button").disabled = true;
+      avatarUrl = await uploadAvatar(avatarFile);
+      els.editAvatarUrl.value = avatarUrl;
+    }
+
     const profile = await upsertProfile({
       username: els.editUsername.value,
       display_name: els.editDisplayName.value,
-      avatar_url: els.editAvatarUrl.value,
+      avatar_url: avatarUrl,
       bio: els.editBio.value
     }, { includeExtended: true });
 
@@ -306,7 +352,29 @@ els.editForm.addEventListener("submit", async (event) => {
   } catch (error) {
     console.error("Profile save failed:", error);
     setMessage(error.message, "error");
+  } finally {
+    els.editForm.querySelector("button").disabled = false;
   }
+});
+
+els.avatarFile.addEventListener("change", () => {
+  const file = els.avatarFile.files?.[0] || null;
+  if (!file) {
+    updateUploadPreview(els.editAvatarUrl.value, "No upload selected.");
+    return;
+  }
+
+  if (!/^image\//i.test(file.type || "")) {
+    els.avatarFile.value = "";
+    updateUploadPreview(els.editAvatarUrl.value, "Choose an image file.");
+    return;
+  }
+
+  pendingAvatarObjectUrl = URL.createObjectURL(file);
+  els.avatarUploadPreview.src = pendingAvatarObjectUrl;
+  els.avatarUploadPreview.hidden = false;
+  els.avatarUploadFallback.hidden = true;
+  els.avatarUploadStatus.textContent = `${file.name} / ${(file.size / 1024 / 1024).toFixed(1)} MB`;
 });
 
 boot();

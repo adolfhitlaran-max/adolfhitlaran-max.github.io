@@ -10,6 +10,7 @@
       color-scheme: dark;
       --bg: #050607;
       --panel: rgba(15, 18, 20, 0.86);
+      --panel-strong: rgba(11, 13, 15, 0.94);
       --text: #f5efe2;
       --muted: #b8b7ae;
       --line: rgba(245, 239, 226, 0.15);
@@ -126,7 +127,7 @@
 
     .profile-shell {
       display: grid;
-      grid-template-columns: minmax(18rem, 0.55fr) minmax(0, 1fr);
+      grid-template-columns: minmax(20rem, 0.62fr) minmax(0, 1fr);
       gap: 1rem;
       align-items: start;
     }
@@ -145,7 +146,7 @@
     }
 
     .profile-hero {
-      min-height: 9rem;
+      min-height: 12rem;
       background:
         linear-gradient(90deg, rgba(5, 6, 7, 0.82), rgba(5, 6, 7, 0.2)),
         url("../assets/uncensored-media-hero.png") center / cover no-repeat;
@@ -158,15 +159,16 @@
     .avatar-row {
       display: flex;
       align-items: end;
+      justify-content: space-between;
       gap: 1rem;
-      margin-top: -4rem;
+      margin-top: -4.7rem;
       margin-bottom: 1rem;
     }
 
     .avatar,
     .avatar-fallback {
-      width: 8rem;
-      height: 8rem;
+      width: 9rem;
+      height: 9rem;
       border: 2px solid rgba(245, 239, 226, 0.25);
       border-radius: 50%;
       background: #111417;
@@ -181,6 +183,13 @@
       color: white;
       font-size: 2rem;
       font-weight: 950;
+    }
+
+    .profile-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.5rem;
     }
 
     h1, h2, h3, p { margin-top: 0; }
@@ -208,6 +217,38 @@
       white-space: pre-wrap;
     }
 
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 1rem;
+    }
+
+    .profile-stat {
+      border: 1px solid rgba(245, 239, 226, 0.12);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      background: rgba(245, 239, 226, 0.055);
+    }
+
+    .profile-stat strong,
+    .profile-stat span {
+      display: block;
+    }
+
+    .profile-stat strong {
+      color: white;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .profile-stat span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
     .panel {
       padding: 1rem;
     }
@@ -220,6 +261,12 @@
 
     form {
       display: grid;
+      gap: 0.75rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
     }
 
@@ -248,6 +295,10 @@
       resize: vertical;
     }
 
+    input[type="file"] {
+      padding: 0.65rem;
+    }
+
     input:focus,
     textarea:focus {
       border-color: rgba(0, 213, 255, 0.55);
@@ -272,6 +323,39 @@
       border-color: transparent;
       background: var(--text);
       color: var(--bg);
+    }
+
+    .upload-box {
+      display: grid;
+      gap: 0.75rem;
+      border: 1px solid rgba(245, 239, 226, 0.12);
+      border-radius: var(--radius);
+      padding: 0.85rem;
+      background: var(--panel-strong);
+    }
+
+    .upload-preview {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .upload-preview img,
+    .upload-preview .avatar-fallback {
+      width: 4.2rem;
+      height: 4.2rem;
+      box-shadow: none;
+      font-size: 1rem;
+    }
+
+    .upload-preview strong,
+    .upload-preview span {
+      display: block;
+    }
+
+    .upload-preview span {
+      color: var(--muted);
+      font-size: 0.86rem;
     }
 
     .activity-grid {
@@ -309,13 +393,18 @@
     @media (max-width: 900px) {
       .topbar,
       .profile-shell,
-      .activity-grid {
+      .activity-grid,
+      .form-grid {
         display: grid;
         grid-template-columns: 1fr;
         align-items: stretch;
       }
 
       .nav {
+        justify-content: start;
+      }
+
+      .profile-actions {
         justify-content: start;
       }
     }
@@ -344,14 +433,34 @@
         <div class="profile-hero"></div>
         <div class="profile-body">
           <div class="avatar-row">
-            <img id="avatarImage" class="avatar" alt="" hidden />
-            <div id="avatarFallback" class="avatar-fallback">UM</div>
+            <div>
+              <img id="avatarImage" class="avatar" alt="" hidden />
+              <div id="avatarFallback" class="avatar-fallback">UM</div>
+            </div>
+            <div class="profile-actions">
+              <a class="button" href="./forum.html">Forum</a>
+              <a class="button" href="./games.html">Games</a>
+            </div>
           </div>
           <p id="profileUsername" class="username">@username</p>
           <h1 id="profileDisplayName">Profile</h1>
           <p id="profileJoined" class="muted">Joined date unavailable</p>
           <p id="profileBio" class="bio">No bio yet.</p>
           <p id="activitySummary" class="muted">Loading activity...</p>
+          <div class="profile-stats" aria-label="Profile activity totals">
+            <div class="profile-stat">
+              <strong id="profilePostCount">0</strong>
+              <span>Posts</span>
+            </div>
+            <div class="profile-stat">
+              <strong id="profileCommentCount">0</strong>
+              <span>Comments</span>
+            </div>
+            <div class="profile-stat">
+              <strong id="profileScoreCount">0</strong>
+              <span>Scores</span>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -365,8 +474,21 @@
         <div id="editPanel" class="panel" hidden>
           <h2 id="editTitle">Edit Profile</h2>
           <form id="editForm">
-            <label>Username <input id="editUsername" type="text" autocomplete="nickname" maxlength="24" required /></label>
-            <label>Display Name <input id="editDisplayName" type="text" autocomplete="name" maxlength="48" /></label>
+            <div class="form-grid">
+              <label>Username <input id="editUsername" type="text" autocomplete="nickname" maxlength="24" required /></label>
+              <label>Display Name <input id="editDisplayName" type="text" autocomplete="name" maxlength="48" /></label>
+            </div>
+            <div class="upload-box">
+              <div class="upload-preview">
+                <img id="avatarUploadPreview" alt="" hidden />
+                <div id="avatarUploadFallback" class="avatar-fallback">UM</div>
+                <div>
+                  <strong>Profile Picture</strong>
+                  <span id="avatarUploadStatus">No upload selected.</span>
+                </div>
+              </div>
+              <label>Upload Image <input id="avatarFile" type="file" accept="image/*" /></label>
+            </div>
             <label>Avatar URL <input id="editAvatarUrl" type="url" placeholder="https://example.com/avatar.png" /></label>
             <label>Bio <textarea id="editBio" maxlength="500" placeholder="Write a short public bio."></textarea></label>
             <button class="primary" type="submit">Save Profile</button>
