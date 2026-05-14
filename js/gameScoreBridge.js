@@ -23,6 +23,17 @@
     rows: []
   };
 
+  function withTimeout(promise, ms, message) {
+    let timeoutId;
+    const timeout = new Promise((_, reject) => {
+      timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => {
+      window.clearTimeout(timeoutId);
+    });
+  }
+
   function loadAuthModule() {
     if (!state.authReady) {
       state.authReady = import(AUTH_MODULE_URL).then((auth) => {
@@ -441,8 +452,8 @@
   async function refreshAuthStatus() {
     ensureWidget();
     try {
-      const auth = await loadAuthModule();
-      const result = await auth.getCurrentUserAndProfile();
+      const auth = await withTimeout(loadAuthModule(), 8000, "Supabase module load timed out.");
+      const result = await withTimeout(auth.getCurrentUserAndProfile(), 8000, "Profile check timed out.");
       if (result.error) {
         console.error("In-game auth/profile check failed:", result.error);
         setStatus(result.error.message || "Profile check failed.", "error");
@@ -477,8 +488,8 @@
     state.list.appendChild(loading);
 
     try {
-      const auth = await loadAuthModule();
-      const rows = await auth.listScores(state.game);
+      const auth = await withTimeout(loadAuthModule(), 8000, "Supabase module load timed out.");
+      const rows = await withTimeout(auth.listScores(state.game), 9000, "Leaderboard load timed out.");
       state.rows = rows || [];
       renderLeaderboard(state.rows);
     } catch (error) {

@@ -34,6 +34,10 @@ alter table public.pictionary_rooms add column if not exists ended_at timestampt
 alter table public.pictionary_rooms add column if not exists updated_at timestamptz default timezone('utc', now());
 
 alter table public.pictionary_rooms enable row level security;
+alter table public.pictionary_rooms replica identity full;
+
+grant select, insert, update on public.pictionary_rooms to authenticated;
+grant usage, select on sequence public.pictionary_rooms_id_seq to authenticated;
 
 drop policy if exists "Pictionary rooms are readable to signed in users" on public.pictionary_rooms;
 drop policy if exists "Signed in users can create pictionary rooms" on public.pictionary_rooms;
