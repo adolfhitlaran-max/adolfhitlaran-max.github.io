@@ -37,7 +37,7 @@
     }
 
     a { color: inherit; text-decoration: none; }
-    button, input { font: inherit; }
+    button, input, textarea { font: inherit; }
 
     .topbar {
       position: sticky;
@@ -223,18 +223,28 @@
       text-transform: uppercase;
     }
 
-    input {
+    input,
+    textarea {
       width: 100%;
-      min-height: 3.1rem;
       border: 1px solid rgba(245, 239, 226, 0.16);
       border-radius: var(--radius);
-      padding: 0 0.85rem;
+      padding: 0.85rem;
       background: rgba(5, 6, 7, 0.68);
       color: var(--text);
       outline: none;
     }
 
-    input:focus {
+    input {
+      min-height: 3.1rem;
+    }
+
+    textarea {
+      min-height: 7rem;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
       border-color: rgba(0, 213, 255, 0.55);
     }
 
@@ -317,6 +327,7 @@
       <a href="./pdfs.html">PDFs</a>
       <a href="./forum.html">Forum</a>
       <a href="./games.html">Games</a>
+      <a href="./profile.html">Profile</a>
       <a class="active" href="./login.html" data-auth-link>Login</a>
     </nav>
   </header>
@@ -368,8 +379,11 @@
       <form id="profileForm">
         <label>Username <input id="username" type="text" autocomplete="nickname" placeholder="letters_numbers_only" maxlength="24" required /></label>
         <label>Display Name <input id="displayName" type="text" autocomplete="name" placeholder="Shown on posts and scores" maxlength="48" /></label>
+        <label>Avatar URL <input id="avatarUrl" type="url" placeholder="https://example.com/avatar.png" /></label>
+        <label>Bio <textarea id="bio" maxlength="500" placeholder="Short public bio"></textarea></label>
         <div class="button-row">
           <button class="primary" type="submit">Save Profile</button>
+          <a class="button" href="./profile.html">Open Profile</a>
           <a class="button" href="./forum.html">Go to Forum</a>
           <a class="button" href="./games.html">Go to Leaderboard</a>
         </div>
@@ -402,7 +416,9 @@
       loginPassword: document.getElementById("loginPassword"),
       profileForm: document.getElementById("profileForm"),
       username: document.getElementById("username"),
-      displayName: document.getElementById("displayName")
+      displayName: document.getElementById("displayName"),
+      avatarUrl: document.getElementById("avatarUrl"),
+      bio: document.getElementById("bio")
     };
 
     let currentUser = null;
@@ -434,10 +450,14 @@
           els.userName.textContent = profile.display_name || profile.username;
           els.username.value = profile.username || "";
           els.displayName.value = profile.display_name || "";
+          els.avatarUrl.value = profile.avatar_url || "";
+          els.bio.value = profile.bio || "";
           setMessage("Logged in and profile loaded.", "ok");
         } else {
           els.username.value = cleanUsername((currentUser.email || "").split("@")[0]);
           els.displayName.value = "";
+          els.avatarUrl.value = "";
+          els.bio.value = "";
           setMessage("Logged in. Create your public profile next.", "ok");
         }
       } catch (error) {
@@ -483,8 +503,10 @@
       try {
         const profile = await upsertProfile({
           username: els.username.value,
-          display_name: els.displayName.value
-        });
+          display_name: els.displayName.value,
+          avatar_url: els.avatarUrl.value,
+          bio: els.bio.value
+        }, { includeExtended: true });
         els.userName.textContent = profile.display_name || profile.username;
         setMessage("Profile saved.", "ok");
       } catch (error) {

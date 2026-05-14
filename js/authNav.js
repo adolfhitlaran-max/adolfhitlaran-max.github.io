@@ -2,7 +2,8 @@
   const DEFAULT_LABEL = "Sign in";
   const FLOATING_LINK_ID = "umAuthFloatingLink";
   const DISPLAY_CACHE_KEY = "um.auth.displayName";
-  const AUTH_MODULE_URL = new URL("./supabaseClient.js", document.currentScript.src).href;
+  const SCRIPT_URL = document.currentScript?.src || new URL("./authNav.js", window.location.href).href;
+  const AUTH_MODULE_URL = new URL("./supabaseClient.js", SCRIPT_URL).href;
 
   let resolveInitialAuth;
   window.UMAuth = { signedIn: false, user: null, profile: null, displayName: DEFAULT_LABEL };
@@ -11,7 +12,11 @@
   });
 
   function loginUrl() {
-    return new URL("../pages/login.html", document.currentScript.src).href;
+    return new URL("../pages/login.html", SCRIPT_URL).href;
+  }
+
+  function profileUrl() {
+    return new URL("../pages/profile.html", SCRIPT_URL).href;
   }
 
   function cachedLabel() {
@@ -91,9 +96,10 @@
     return link;
   }
 
-  function setAuthLabel(link, label) {
+  function setAuthLabel(link, label, signedIn = false) {
     const icon = link.querySelector("svg, i");
     link.textContent = "";
+    link.href = signedIn ? profileUrl() : loginUrl();
 
     if (icon) {
       link.appendChild(icon);
@@ -116,16 +122,16 @@
     window.dispatchEvent(new CustomEvent("um:auth-ready", { detail: window.UMAuth }));
   }
 
-  function paint(label) {
+  function paint(label, signedIn = false) {
     ensureFloatingAuthLink();
     document.querySelectorAll("[data-auth-link]").forEach((link) => {
-      setAuthLabel(link, label);
+      setAuthLabel(link, label, signedIn);
     });
   }
 
   async function renderAuthNav() {
     const cached = cachedLabel();
-    paint(cached || DEFAULT_LABEL);
+    paint(cached || DEFAULT_LABEL, !!cached);
 
     try {
       const auth = await import(AUTH_MODULE_URL);
@@ -133,7 +139,7 @@
 
       if (!user) {
         cacheLabel("");
-        paint(DEFAULT_LABEL);
+        paint(DEFAULT_LABEL, false);
         publishAuthState({ signedIn: false, user: null, profile: null, displayName: DEFAULT_LABEL });
         return;
       }
@@ -141,11 +147,11 @@
       const profile = await auth.getProfile(user.id);
       const label = auth.displayName(profile, user.email?.split("@")[0] || "Profile");
       cacheLabel(label);
-      paint(label);
+      paint(label, true);
       publishAuthState({ signedIn: true, user, profile, displayName: label });
     } catch (_error) {
       const fallback = cachedLabel() || DEFAULT_LABEL;
-      paint(fallback);
+      paint(fallback, fallback !== DEFAULT_LABEL);
       publishAuthState({ signedIn: fallback !== DEFAULT_LABEL, user: null, profile: null, displayName: fallback });
     }
   }
@@ -157,7 +163,7 @@
     const profile = event.detail || null;
     const label = profile?.display_name || profile?.username || cachedLabel() || DEFAULT_LABEL;
     cacheLabel(label);
-    paint(label);
+    paint(label, label !== DEFAULT_LABEL);
     renderAuthNav();
   });
 

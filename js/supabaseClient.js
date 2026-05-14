@@ -17,6 +17,9 @@ window.UMSupabase = {
   supabase
 };
 
+const PROFILE_COLUMNS = "id, username, display_name, avatar_url, bio, created_at, updated_at";
+const BASE_PROFILE_COLUMNS = "id, username, display_name, created_at, updated_at";
+
 function withQueryTimeout(promise, ms, message) {
   let timeoutId;
   const timeout = new Promise((_, reject) => {
@@ -26,6 +29,48 @@ function withQueryTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => {
     window.clearTimeout(timeoutId);
   });
+}
+
+function isMissingOptionalProfileColumn(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    error?.code === "42703" ||
+    message.includes("avatar_url") ||
+    message.includes("bio")
+  );
+}
+
+function missingExtendedProfileColumnsError() {
+  return new Error(
+    "Profile save failed because the profiles table is missing avatar_url and/or bio. Add avatar_url text and bio text columns in Supabase."
+  );
+}
+
+function normalizeProfile(profile) {
+  if (!profile) return null;
+  return {
+    avatar_url: "",
+    bio: "",
+    ...profile
+  };
+}
+
+async function runProfileSelect(applyFilter, mode = "maybeSingle") {
+  const run = async (columns) => {
+    const query = applyFilter(supabase.from("profiles").select(columns));
+    return query[mode]();
+  };
+
+  let result = await run(PROFILE_COLUMNS);
+  if (result.error && isMissingOptionalProfileColumn(result.error)) {
+    console.error("Supabase profile extended columns missing:", result.error);
+    result = await run(BASE_PROFILE_COLUMNS);
+  }
+
+  if (result.data) {
+    result.data = normalizeProfile(result.data);
+  }
+  return result;
 }
 
 export async function getSession() {
@@ -62,11 +107,7 @@ export async function signOut() {
 
 export async function getProfile(userId) {
   if (!userId) return null;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, username, display_name")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await runProfileSelect((query) => query.eq("id", userId), "maybeSingle");
 
   if (error) throw error;
   return data;
@@ -90,11 +131,25 @@ export async function getCurrentUserProfile() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, display_name, created_at, updated_at")
+    .select(PROFILE_COLUMNS)
     .eq("id", user.id)
     .single();
 
   if (profileError) {
+    if (isMissingOptionalProfileColumn(profileError)) {
+      console.error("Supabase profile extended columns missing:", profileError);
+      const { data: fallbackProfile, error: fallbackError } = await supabase
+        .from("profiles")
+        .select(BASE_PROFILE_COLUMNS)
+        .eq("id", user.id)
+        .single();
+
+      if (!fallbackError) return { user, profile: normalizeProfile(fallbackProfile) };
+      if (fallbackError.code === "PGRST116") return { user, profile: null };
+      console.error("Supabase profile fallback lookup failed:", fallbackError);
+      throw fallbackError;
+    }
+
     console.error("Supabase profile lookup failed:", profileError);
     if (profileError.code === "PGRST116") {
       return { user, profile: null };
@@ -102,10 +157,22 @@ export async function getCurrentUserProfile() {
     throw profileError;
   }
 
-  return { user, profile };
+  return { user, profile: normalizeProfile(profile) };
 }
 
-export async function upsertProfile(profile) {
+export async function getProfileByUsername(username) {
+  const clean = cleanUsername(username);
+  if (!clean) return null;
+
+  const { data, error } = await runProfileSelect((query) => query.eq("username", clean), "maybeSingle");
+  if (error) {
+    console.error("Supabase username profile lookup failed:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function upsertProfile(profile, options = {}) {
   const user = await getCurrentUser();
   if (!user) throw new Error("You need to be logged in to save a profile.");
 
@@ -113,34 +180,59 @@ export async function upsertProfile(profile) {
   if (!username) throw new Error("Username is required.");
 
   const displayName = String(profile.display_name || "").trim() || username;
+  const includeExtended = !!options.includeExtended || "avatar_url" in profile || "bio" in profile;
   const payload = {
     id: user.id,
     username: username,
     display_name: displayName
   };
 
+  if (includeExtended) {
+    payload.avatar_url = String(profile.avatar_url || "").trim();
+    payload.bio = String(profile.bio || "").trim().slice(0, 500);
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .upsert(payload, { onConflict: "id" })
-    .select("id, username, display_name")
+    .select(includeExtended ? PROFILE_COLUMNS : BASE_PROFILE_COLUMNS)
     .single();
 
-  if (error) throw error;
-  window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: data }));
-  return data;
+  if (error) {
+    console.error("Supabase profile save failed:", error);
+    if (includeExtended && isMissingOptionalProfileColumn(error)) throw missingExtendedProfileColumnsError();
+    throw error;
+  }
+
+  const normalized = normalizeProfile(data);
+  window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: normalized }));
+  return normalized;
 }
 
 export async function getProfilesForUserIds(userIds) {
   const uniqueIds = [...new Set((userIds || []).filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("profiles")
-    .select("id, username, display_name")
+    .select(PROFILE_COLUMNS)
     .in("id", uniqueIds);
 
+  if (error && isMissingOptionalProfileColumn(error)) {
+    console.error("Supabase profile extended columns missing:", error);
+    const fallback = await supabase
+      .from("profiles")
+      .select(BASE_PROFILE_COLUMNS)
+      .in("id", uniqueIds);
+    data = fallback.data;
+    error = fallback.error;
+  }
+
   if (error) throw error;
-  return new Map((data || []).map((profile) => [profile.id, profile]));
+  return new Map((data || []).map((profile) => {
+    const normalized = normalizeProfile(profile);
+    return [normalized.id, normalized];
+  }));
 }
 
 export async function createPost({ title, body }) {
@@ -242,6 +334,77 @@ export async function listScores(game = "all") {
     ...score,
     author: profiles.get(score.user_id) || null
   }));
+}
+
+export async function getUserActivity(userId) {
+  if (!userId) return { posts: [], comments: [], scores: [], errors: [] };
+
+  const activity = {
+    posts: [],
+    comments: [],
+    scores: [],
+    errors: []
+  };
+
+  const [postsResult, scoresResult, commentsResult] = await Promise.allSettled([
+    supabase
+      .from("forum_posts")
+      .select("id, title, body, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .schema("public")
+      .from("game_scores")
+      .select("id, game, score, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("forum_comments")
+      .select("id, body, post_id, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5)
+  ]);
+
+  if (postsResult.status === "fulfilled") {
+    if (postsResult.value.error) {
+      console.error("Supabase user posts lookup failed:", postsResult.value.error);
+      activity.errors.push(`Forum posts: ${postsResult.value.error.message}`);
+    } else {
+      activity.posts = postsResult.value.data || [];
+    }
+  } else {
+    console.error("Supabase user posts lookup failed:", postsResult.reason);
+    activity.errors.push(`Forum posts: ${postsResult.reason.message || postsResult.reason}`);
+  }
+
+  if (scoresResult.status === "fulfilled") {
+    if (scoresResult.value.error) {
+      console.error("Supabase user scores lookup failed:", scoresResult.value.error);
+      activity.errors.push(`Scores: ${scoresResult.value.error.message}`);
+    } else {
+      activity.scores = scoresResult.value.data || [];
+    }
+  } else {
+    console.error("Supabase user scores lookup failed:", scoresResult.reason);
+    activity.errors.push(`Scores: ${scoresResult.reason.message || scoresResult.reason}`);
+  }
+
+  if (commentsResult.status === "fulfilled") {
+    if (commentsResult.value.error) {
+      console.error("Supabase user comments lookup failed:", commentsResult.value.error);
+      activity.errors.push("Comments are not available yet.");
+    } else {
+      activity.comments = commentsResult.value.data || [];
+    }
+  } else {
+    console.error("Supabase user comments lookup failed:", commentsResult.reason);
+    activity.errors.push("Comments are not available yet.");
+  }
+
+  return activity;
 }
 
 export function cleanUsername(value) {
