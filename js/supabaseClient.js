@@ -29,6 +29,19 @@ const AUTH_TIMEOUT_MS = 7000;
 const SESSION_TIMEOUT_MS = 2500;
 const QUERY_TIMEOUT_MS = 7000;
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const GAME_SCORE_ALIASES = {
+  "Neon Catch": ["Neon Catch", "George Floyd Game"],
+  "George Floyd Game": ["Neon Catch", "George Floyd Game"],
+  "ICE Roundup": ["ICE Roundup", "ICEGame"],
+  ICEGame: ["ICE Roundup", "ICEGame"],
+  "Road to Agartha": ["Road to Agartha", "Retard Radio The Game"],
+  "Retard Radio The Game": ["Road to Agartha", "Retard Radio The Game"]
+};
+const GAME_SCORE_LABELS = {
+  "George Floyd Game": "Neon Catch",
+  ICEGame: "ICE Roundup",
+  "Retard Radio The Game": "Road to Agartha"
+};
 
 function withQueryTimeout(promise, ms, message) {
   let timeoutId;
@@ -603,9 +616,10 @@ export async function saveScore(game, score) {
     throw new Error("Score must be a positive number.");
   }
 
+  const rawGame = String(game || "Uncensored Arcade").trim() || "Uncensored Arcade";
   const payload = {
     user_id: user.id,
-    game: String(game || "Uncensored Arcade").trim(),
+    game: friendlyGameName(rawGame),
     score: numericScore
   };
 
@@ -647,7 +661,10 @@ export async function listScores(game = "all") {
     .limit(100);
 
   if (game && game !== "all") {
-    query = query.eq("game", game);
+    const gameNames = scoreGameAliases(game);
+    if (gameNames.length) {
+      query = gameNames.length > 1 ? query.in("game", gameNames) : query.eq("game", gameNames[0]);
+    }
   }
 
   const { data, error } = await withQueryTimeout(
@@ -673,8 +690,20 @@ export async function listScores(game = "all") {
 
   return (data || []).map((score) => ({
     ...score,
+    game: friendlyGameName(score.game),
     author: profiles.get(score.user_id) || null
   }));
+}
+
+export function scoreGameAliases(game) {
+  const clean = String(game || "").trim();
+  if (!clean || clean === "all") return [];
+  return GAME_SCORE_ALIASES[clean] || [clean];
+}
+
+export function friendlyGameName(game) {
+  const clean = String(game || "").trim();
+  return GAME_SCORE_LABELS[clean] || clean || "Unknown Game";
 }
 
 export async function getUserActivity(userId) {

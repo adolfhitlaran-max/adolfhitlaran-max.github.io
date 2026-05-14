@@ -428,6 +428,7 @@
 
 <script src="../back-link.js"></script>
 <script src="../../js/authNav.js"></script>
+<script src="../../js/gameScoreBridge.js"></script>
 <script>
 (() => {
   // ---------- ASSETS ----------
@@ -457,6 +458,10 @@
   const GOOD_POINTS = 5;
 
   const HS_KEY = "neoncatch_highscore_v1";
+  window.UMGameScores?.init({
+    game: "Neon Catch",
+    title: "Neon Catch Leaderboard"
+  });
 
   // ---------- POWER UPS (3) ----------
   const POWERUPS = [
@@ -964,6 +969,7 @@
   }
 
   function startRun(){
+    window.UMGameScores?.resetRun?.();
     unlockAudio();
     startMusicIfAllowed();
 
@@ -998,6 +1004,11 @@
 
     if (win) SFX.win(); else SFX.gameOver();
     setMusicVolume();
+
+    window.UMGameScores?.submitScore(state.scoreTotal, {
+      game: "Neon Catch",
+      reason: win ? "run-complete" : "game-over"
+    });
   }
 
   function finishLevel(){

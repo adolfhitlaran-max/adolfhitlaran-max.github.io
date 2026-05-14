@@ -337,6 +337,7 @@ const state = {
   pendingShockwaveHits: [],
   floatingText: [],
   coins: 0,
+  scoreSubmitted: false,
   upgradeChoices: [],
   totalWavesCleared: 0,
   combo: 0,
@@ -349,6 +350,26 @@ const state = {
   dangerPulse: 0,
   timeSlow: 0
 };
+
+window.UMGameScores?.init({
+  game: 'Road to Agartha',
+  title: 'Road to Agartha Leaderboard'
+});
+
+function getRunScore(reason = 'run') {
+  const levelBonus = reason === 'level-cleared' ? (state.levelIndex + 1) * 250 : 0;
+  const waveBonus = state.totalWavesCleared * 100;
+  return Math.max(0, Math.floor(state.coins + waveBonus + levelBonus));
+}
+
+function submitRunScore(reason) {
+  if (state.scoreSubmitted) return;
+  state.scoreSubmitted = true;
+  window.UMGameScores?.submitScore(getRunScore(reason), {
+    game: 'Road to Agartha',
+    reason
+  });
+}
 
 const player = {
   x: 190,
@@ -617,8 +638,10 @@ function startGame() {
 }
 
 function startRunAtLevel(levelIndex = 0) {
+  window.UMGameScores?.resetRun?.();
   state.levelIndex = clamp(levelIndex, 0, LEVELS.length - 1);
   state.coins = 0;
+  state.scoreSubmitted = false;
   state.totalWavesCleared = 0;
   resetPlayerBaseline();
   if (window.UPGRADE_SYSTEM) window.UPGRADE_SYSTEM.reset();
@@ -672,6 +695,8 @@ function renderLevelChoices() {
 }
 
 function restartLevel() {
+  window.UMGameScores?.resetRun?.();
+  state.scoreSubmitted = false;
   resetLevel();
   state.mode = 'playing';
   hideScreens();
@@ -687,6 +712,8 @@ function nextLevel() {
     startRunAtLevel(0);
     return;
   }
+  window.UMGameScores?.resetRun?.();
+  state.scoreSubmitted = false;
   resetLevel();
   state.mode = 'playing';
   hideScreens();
@@ -776,6 +803,7 @@ function beginWave() {
 
 function clearLevel() {
   unlockLevel(state.levelIndex + 2);
+  submitRunScore('level-cleared');
   state.mode = 'victory';
   ui.resultTitle.textContent = state.levelIndex >= LEVELS.length - 1 ? 'Campaign Held' : 'Line Held';
   ui.resultBody.textContent = `You defended ${currentLevel().name}. Returning to Road to Agartha with the next route signal unlocked.`;
@@ -786,6 +814,7 @@ function clearLevel() {
 }
 
 function gameOver(reason = 'The line fell.') {
+  submitRunScore('game-over');
   state.mode = 'dead';
   ui.resultTitle.textContent = 'You Were Overrun';
   ui.resultBody.textContent = reason;
