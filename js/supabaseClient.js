@@ -645,12 +645,6 @@ export async function saveScore(game, score) {
   };
 }
 
-window.saveScore = saveScore;
-
-export async function submitScore({ game, score }) {
-  return saveScore(game, score);
-}
-
 export async function listScores(game = "all") {
   let query = supabase
     .schema("public")

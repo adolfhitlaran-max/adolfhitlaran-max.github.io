@@ -3,7 +3,6 @@ import {
   formatDate,
   getCurrentUserAndProfile,
   listScores,
-  saveScore,
   supabase
 } from "./supabaseClient.js";
 
@@ -13,9 +12,6 @@ const els = {
   scoreCount: document.getElementById("scoreCount"),
   profileStatusName: document.getElementById("profileStatusName"),
   profileStatusDetail: document.getElementById("profileStatusDetail"),
-  scoreForm: document.getElementById("scoreForm"),
-  gameName: document.getElementById("gameName"),
-  scoreValue: document.getElementById("scoreValue"),
   filterGame: document.getElementById("filterGame"),
   leaderboardTitle: document.getElementById("leaderboardTitle"),
   leaderboard: document.getElementById("leaderboard")
@@ -189,7 +185,6 @@ async function refreshProfile() {
   currentUser = result.user;
   currentProfile = result.profile;
   authProfileError = !!result.error;
-  els.scoreForm.querySelector("button").disabled = !currentProfile?.username;
 
   if (result.error) {
     console.error("Score profile detection failed:", result.error);
@@ -200,21 +195,21 @@ async function refreshProfile() {
 
   if (!currentUser) {
     authProfileError = false;
-    setProfileStatus("Not signed in", "Log in before submitting scores.");
-    if (!leaderboardError) setLinkedMessage("Not signed in. Log in before submitting scores.", "./login.html", "Login", "");
+    setProfileStatus("Not signed in", "Log in before playing if you want runs saved.");
+    if (!leaderboardError) setLinkedMessage("Not signed in. Log in before playing if you want runs saved.", "./login.html", "Login", "");
     return;
   }
 
   if (!currentProfile?.username) {
     authProfileError = false;
-    setProfileStatus(currentUser.email || "Signed in", "Profile missing. Create a username before submitting scores.");
-    if (!leaderboardError) setLinkedMessage("Profile missing. Create a username before submitting scores.", "./profile.html", "Create your profile");
+    setProfileStatus(currentUser.email || "Signed in", "Profile missing. Create a username before scores can save.");
+    if (!leaderboardError) setLinkedMessage("Profile missing. Create a username before scores can save.", "./profile.html", "Create your profile");
     return;
   }
 
   authProfileError = false;
   setProfileStatus(displayName(currentProfile), `@${currentProfile.username}`);
-  if (!leaderboardError) setMessage("Profile loaded. You can submit scores.", "ok");
+  if (!leaderboardError) setMessage("Profile loaded. Game runs will save automatically.", "ok");
 }
 
 async function refreshScores() {
@@ -246,11 +241,11 @@ async function refreshScores() {
       renderEmptyLeaderboard("No scores yet.");
       if (authProfileError) return;
       if (!currentUser) {
-        setLinkedMessage("Not signed in. Log in before submitting scores.", "./login.html", "Login", "");
+        setLinkedMessage("Not signed in. Log in before playing if you want runs saved.", "./login.html", "Login", "");
       } else if (!currentProfile?.username) {
-        setLinkedMessage("Profile missing. Create a username before submitting scores.", "./profile.html", "Create your profile");
+        setLinkedMessage("Profile missing. Create a username before scores can save.", "./profile.html", "Create your profile");
       } else {
-        setMessage("No scores yet. Submit the first run.", "");
+        setMessage("No scores yet. Play a game to post the first run.", "");
       }
       return;
     }
@@ -258,9 +253,9 @@ async function refreshScores() {
     scores.forEach((score, index) => els.leaderboard.appendChild(renderScore(score, index)));
     if (authProfileError) return;
     if (!currentUser) {
-      setLinkedMessage("Not signed in. Log in before submitting scores.", "./login.html", "Login", "");
+      setLinkedMessage("Not signed in. Log in before playing if you want runs saved.", "./login.html", "Login", "");
     } else if (!currentProfile?.username) {
-      setLinkedMessage("Profile missing. Create a username before submitting scores.", "./profile.html", "Create your profile");
+      setLinkedMessage("Profile missing. Create a username before scores can save.", "./profile.html", "Create your profile");
     } else {
       setMessage("Leaderboard loaded.", "ok");
     }
@@ -283,24 +278,6 @@ async function boot() {
   console.log("Page render complete");
   await refreshScores();
 }
-
-els.scoreForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  if (!currentProfile?.username) {
-    setLinkedMessage("Profile missing. Create a username before submitting scores.", "./profile.html", "Create your profile");
-    return;
-  }
-
-  try {
-    await saveScore(els.gameName.value, els.scoreValue.value);
-    els.scoreForm.reset();
-    setMessage("Score submitted.", "ok");
-    await refreshScores();
-  } catch (error) {
-    console.error("Score submit failed:", error);
-    setMessage(error.message, "error");
-  }
-});
 
 els.filterGame.addEventListener("change", refreshScores);
 supabase.auth.onAuthStateChange(() => refreshProfile());

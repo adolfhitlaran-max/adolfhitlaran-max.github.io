@@ -453,7 +453,7 @@
       <div class="hero-main">
         <p class="eyebrow">Supabase Scores</p>
         <h1>Games</h1>
-        <p>Submit scores from the static site and keep a live leaderboard sorted from highest to lowest.</p>
+        <p>Scores save automatically when a signed-in player finishes a run inside one of the games.</p>
       </div>
       <aside class="stat-panel">
         <div class="stat-box">
@@ -472,26 +472,18 @@
 
     <section class="workspace">
       <aside class="panel">
-        <p class="eyebrow">Score Submit</p>
-        <h2>Post Score</h2>
+        <p class="eyebrow">Automatic Scores</p>
+        <h2>Score Status</h2>
         <div class="user-strip">
           <strong id="profileStatusName">Checking sign in...</strong>
           <span id="profileStatusDetail">Loading profile status.</span>
         </div>
-        <form id="scoreForm">
-          <label>Game
-            <select id="gameName">
-              <option value="Neon Catch">Neon Catch</option>
-              <option value="ICE Roundup">ICE Roundup</option>
-              <option value="Road to Agartha">Road to Agartha</option>
-            </select>
-          </label>
-          <label>Score <input id="scoreValue" type="number" min="0" step="1" required /></label>
-          <button class="primary" type="submit">Submit Score</button>
-        </form>
+        <div class="empty">
+          High scores can only be saved by playing a game while signed in. Manual score entry is disabled.
+        </div>
         <div class="button-row" style="margin-top: 0.8rem;">
+          <a class="button primary" href="../games/">Play Games</a>
           <a class="button" href="./profile.html">Profile</a>
-          <a class="button" href="../games/">Play Games</a>
         </div>
       </aside>
 
