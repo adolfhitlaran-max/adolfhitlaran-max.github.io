@@ -23,6 +23,10 @@ const PROFILE_COLUMNS = "id, username, display_name, avatar_url, bio, created_at
 const BASE_PROFILE_COLUMNS = "id, username, display_name, created_at, updated_at";
 const FORUM_POST_COLUMNS = "id, user_id, title, body, created_at, updated_at";
 const FORUM_COMMENT_COLUMNS = "id, post_id, user_id, body, created_at, updated_at";
+const SUPABASE_REF = "dbkrtdzppymjxutivsmo";
+const AUTH_TIMEOUT_MS = 7000;
+const SESSION_TIMEOUT_MS = 2500;
+const QUERY_TIMEOUT_MS = 7000;
 
 function withQueryTimeout(promise, ms, message) {
   let timeoutId;
@@ -59,10 +63,28 @@ function normalizeProfile(profile) {
   };
 }
 
+function getStoredSessionFallback() {
+  try {
+    const exactKey = `sb-${SUPABASE_REF}-auth-token`;
+    const key = localStorage.getItem(exactKey)
+      ? exactKey
+      : Object.keys(localStorage).find((item) => item.startsWith("sb-") && item.endsWith("-auth-token"));
+    if (!key) return null;
+
+    const parsed = JSON.parse(localStorage.getItem(key) || "null");
+    const session = parsed?.currentSession || parsed?.session || parsed;
+    if (session?.user) return { session };
+  } catch (error) {
+    console.warn("Stored Supabase session fallback failed:", error);
+  }
+
+  return null;
+}
+
 async function runProfileSelect(applyFilter, mode = "maybeSingle") {
   const run = async (columns) => {
     const query = applyFilter(supabase.from("profiles").select(columns));
-    return query[mode]();
+    return withQueryTimeout(query[mode](), QUERY_TIMEOUT_MS, "Profile query timed out.");
   };
 
   let result = await run(PROFILE_COLUMNS);
@@ -78,18 +100,25 @@ async function runProfileSelect(applyFilter, mode = "maybeSingle") {
 }
 
 export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
+  const storedSession = getStoredSessionFallback();
+  if (storedSession?.session?.user) return storedSession.session;
+
+  const { data, error } = await withQueryTimeout(
+    supabase.auth.getSession(),
+    SESSION_TIMEOUT_MS,
+    "Supabase session check timed out."
+  ).catch((sessionError) => ({
+    data: getStoredSessionFallback(),
+    error: getStoredSessionFallback() ? null : sessionError
+  }));
+
   if (error) throw error;
-  return data.session;
+  return data?.session || null;
 }
 
 export async function getCurrentUser() {
   const session = await getSession();
-  if (!session) return null;
-
-  const { data, error } = await supabase.auth.getUser();
-  if (error) throw error;
-  return data.user;
+  return session?.user || null;
 }
 
 export async function getCurrentUserAndProfile() {
@@ -100,37 +129,69 @@ export async function getCurrentUserAndProfile() {
     error: null
   };
 
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  console.log("Auth check complete", {
-    hasUser: !!userData?.user,
-    hasError: !!userError
-  });
+  const storedSession = getStoredSessionFallback();
+  const { data: sessionData, error: sessionError } = storedSession?.session?.user
+    ? { data: storedSession, error: null }
+    : await withQueryTimeout(
+      supabase.auth.getSession(),
+      SESSION_TIMEOUT_MS,
+      "Supabase session check timed out."
+    ).catch((error) => ({
+      data: getStoredSessionFallback(),
+      error: getStoredSessionFallback() ? null : error
+    }));
 
-  if (userError) {
-    const message = String(userError.message || "");
-    if (userError.name === "AuthSessionMissingError" || /auth session missing|session.*missing/i.test(message)) {
-      console.log("Profile check complete", { hasProfile: false, skipped: true });
-      return result;
-    }
-
-    console.error("getUser error:", userError);
-    result.error = userError;
+  if (sessionError) {
+    console.error("getSession error:", sessionError);
+    result.error = sessionError;
+    console.log("Auth check complete", { hasUser: false, hasError: true });
     console.log("Profile check complete", { hasProfile: false, error: true });
     return result;
   }
 
-  if (!userData || !userData.user) {
+  const sessionUser = sessionData?.session?.user || null;
+  if (!sessionUser) {
+    console.log("Auth check complete", { hasUser: false, hasError: false });
     console.log("Profile check complete", { hasProfile: false, skipped: true });
     return result;
   }
 
-  result.user = userData.user;
+  result.user = sessionUser;
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userData.user.id)
-    .maybeSingle();
+  const { data: userData, error: userError } = storedSession?.session?.user
+    ? { data: { user: sessionUser }, error: null }
+    : await withQueryTimeout(
+      supabase.auth.getUser(),
+      3000,
+      "Supabase user validation timed out."
+    ).catch((error) => ({
+      data: null,
+      error
+    }));
+
+  console.log("Auth check complete", {
+    hasUser: !!result.user,
+    hasError: !!userError
+  });
+
+  if (userError) {
+    console.warn("getUser validation skipped:", userError);
+  } else if (userData?.user) {
+    result.user = userData.user;
+  }
+
+  const { data: profile, error: profileError } = await withQueryTimeout(
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", result.user.id)
+      .maybeSingle(),
+    AUTH_TIMEOUT_MS,
+    "Profile query timed out."
+  ).catch((error) => ({
+    data: null,
+    error
+  }));
 
   if (profileError) {
     console.error("profile load error:", profileError);
@@ -212,11 +273,15 @@ export async function upsertProfile(profile, options = {}) {
     payload.bio = String(profile.bio || "").trim().slice(0, 500);
   }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .upsert(payload, { onConflict: "id" })
-    .select(includeExtended ? PROFILE_COLUMNS : BASE_PROFILE_COLUMNS)
-    .single();
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .from("profiles")
+      .upsert(payload, { onConflict: "id" })
+      .select(includeExtended ? PROFILE_COLUMNS : BASE_PROFILE_COLUMNS)
+      .single(),
+    QUERY_TIMEOUT_MS,
+    "Profile save timed out."
+  );
 
   if (error) {
     console.error("Supabase profile save failed:", error);
@@ -233,17 +298,25 @@ export async function getProfilesForUserIds(userIds) {
   const uniqueIds = [...new Set((userIds || []).filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  let { data, error } = await supabase
-    .from("profiles")
-    .select(PROFILE_COLUMNS)
-    .in("id", uniqueIds);
+  let { data, error } = await withQueryTimeout(
+    supabase
+      .from("profiles")
+      .select(PROFILE_COLUMNS)
+      .in("id", uniqueIds),
+    QUERY_TIMEOUT_MS,
+    "Profile batch lookup timed out."
+  );
 
   if (error && isMissingOptionalProfileColumn(error)) {
     console.error("Supabase profile extended columns missing:", error);
-    const fallback = await supabase
-      .from("profiles")
-      .select(BASE_PROFILE_COLUMNS)
-      .in("id", uniqueIds);
+    const fallback = await withQueryTimeout(
+      supabase
+        .from("profiles")
+        .select(BASE_PROFILE_COLUMNS)
+        .in("id", uniqueIds),
+      QUERY_TIMEOUT_MS,
+      "Profile fallback batch lookup timed out."
+    );
     data = fallback.data;
     error = fallback.error;
   }
@@ -278,7 +351,13 @@ async function getCurrentPostingProfile(action) {
 }
 
 async function attachForumAuthors(rows) {
-  const profiles = await getProfilesForUserIds((rows || []).map((row) => row.user_id));
+  let profiles = new Map();
+  try {
+    profiles = await getProfilesForUserIds((rows || []).map((row) => row.user_id));
+  } catch (error) {
+    console.error("Forum profile attribution failed:", error);
+  }
+
   return (rows || []).map((row) => ({
     ...row,
     author: profiles.get(row.user_id) || null
@@ -290,10 +369,14 @@ async function getCommentCounts(postIds) {
   const counts = new Map(uniqueIds.map((id) => [id, 0]));
   if (!uniqueIds.length) return counts;
 
-  const { data, error } = await supabase
-    .from("forum_comments")
-    .select("post_id")
-    .in("post_id", uniqueIds);
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .from("forum_comments")
+      .select("post_id")
+      .in("post_id", uniqueIds),
+    QUERY_TIMEOUT_MS,
+    "Forum comment count query timed out."
+  );
 
   if (error) {
     console.error("Supabase forum comment counts failed:", error);
@@ -320,11 +403,15 @@ export async function createPost({ title, body }) {
     throw new Error("Post title and body are required.");
   }
 
-  const { data, error } = await supabase
-    .from("forum_posts")
-    .insert(payload)
-    .select(FORUM_POST_COLUMNS)
-    .single();
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .from("forum_posts")
+      .insert(payload)
+      .select(FORUM_POST_COLUMNS)
+      .single(),
+    QUERY_TIMEOUT_MS,
+    "Forum post insert timed out."
+  );
 
   if (error) {
     console.error("Supabase forum post insert failed:", error);
@@ -334,21 +421,28 @@ export async function createPost({ title, body }) {
 }
 
 export async function listPosts() {
-  const { data, error } = await supabase
-    .from("forum_posts")
-    .select(FORUM_POST_COLUMNS)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .from("forum_posts")
+      .select(FORUM_POST_COLUMNS)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    QUERY_TIMEOUT_MS,
+    "Forum posts query timed out."
+  );
 
   if (error) {
     console.error("Supabase forum posts lookup failed:", error);
     throw error;
   }
 
-  const [posts, commentCounts] = await Promise.all([
-    attachForumAuthors(data || []),
-    getCommentCounts((data || []).map((post) => post.id))
-  ]);
+  const posts = await attachForumAuthors(data || []);
+  let commentCounts = new Map((data || []).map((post) => [post.id, 0]));
+  try {
+    commentCounts = await getCommentCounts((data || []).map((post) => post.id));
+  } catch (error) {
+    console.error("Forum comment counts unavailable:", error);
+  }
 
   return posts.map((post) => ({
     ...post,
@@ -360,32 +454,45 @@ export async function getPost(postId) {
   const id = Number.parseInt(postId, 10);
   if (!Number.isFinite(id)) throw new Error("Post id is invalid.");
 
-  const { data: post, error: postError } = await supabase
-    .from("forum_posts")
-    .select(FORUM_POST_COLUMNS)
-    .eq("id", id)
-    .single();
+  const { data: post, error: postError } = await withQueryTimeout(
+    supabase
+      .from("forum_posts")
+      .select(FORUM_POST_COLUMNS)
+      .eq("id", id)
+      .single(),
+    QUERY_TIMEOUT_MS,
+    "Forum post detail query timed out."
+  );
 
   if (postError) {
     console.error("Supabase forum post detail lookup failed:", postError);
     throw postError;
   }
 
-  const { data: comments, error: commentsError } = await supabase
-    .from("forum_comments")
-    .select(FORUM_COMMENT_COLUMNS)
-    .eq("post_id", id)
-    .order("created_at", { ascending: true });
+  const { data: comments, error: commentsError } = await withQueryTimeout(
+    supabase
+      .from("forum_comments")
+      .select(FORUM_COMMENT_COLUMNS)
+      .eq("post_id", id)
+      .order("created_at", { ascending: true }),
+    QUERY_TIMEOUT_MS,
+    "Forum comments query timed out."
+  );
 
   if (commentsError) {
     console.error("Supabase forum comments lookup failed:", commentsError);
     throw commentsError;
   }
 
-  const profiles = await getProfilesForUserIds([
-    post.user_id,
-    ...(comments || []).map((comment) => comment.user_id)
-  ]);
+  let profiles = new Map();
+  try {
+    profiles = await getProfilesForUserIds([
+      post.user_id,
+      ...(comments || []).map((comment) => comment.user_id)
+    ]);
+  } catch (error) {
+    console.error("Forum detail profile attribution failed:", error);
+  }
 
   return {
     ...post,
@@ -405,22 +512,31 @@ export async function createComment({ postId, body }) {
   if (!Number.isFinite(id)) throw new Error("Post id is invalid.");
   if (!text) throw new Error("Comment body is required.");
 
-  const { data, error } = await supabase
-    .from("forum_comments")
-    .insert({
-      post_id: id,
-      user_id: user.id,
-      body: text
-    })
-    .select(FORUM_COMMENT_COLUMNS)
-    .single();
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .from("forum_comments")
+      .insert({
+        post_id: id,
+        user_id: user.id,
+        body: text
+      })
+      .select(FORUM_COMMENT_COLUMNS)
+      .single(),
+    QUERY_TIMEOUT_MS,
+    "Forum comment insert timed out."
+  );
 
   if (error) {
     console.error("Supabase forum comment insert failed:", error);
     throw error;
   }
 
-  const profiles = await getProfilesForUserIds([data.user_id]);
+  let profiles = new Map();
+  try {
+    profiles = await getProfilesForUserIds([data.user_id]);
+  } catch (error) {
+    console.error("Forum comment profile attribution failed:", error);
+  }
   return {
     ...data,
     author: profiles.get(data.user_id) || null
@@ -442,12 +558,16 @@ export async function submitScore({ game, score }) {
     score: numericScore
   };
 
-  const { data, error } = await supabase
-    .schema("public")
-    .from("game_scores")
-    .insert(payload)
-    .select("id, user_id, game, score, created_at")
-    .single();
+  const { data, error } = await withQueryTimeout(
+    supabase
+      .schema("public")
+      .from("game_scores")
+      .insert(payload)
+      .select("id, user_id, game, score, created_at")
+      .single(),
+    QUERY_TIMEOUT_MS,
+    "Score submit timed out."
+  );
 
   if (error) throw error;
   return data;
@@ -466,7 +586,11 @@ export async function listScores(game = "all") {
     query = query.eq("game", game);
   }
 
-  const { data, error } = await query;
+  const { data, error } = await withQueryTimeout(
+    query,
+    QUERY_TIMEOUT_MS,
+    "Leaderboard query timed out while reading public.game_scores."
+  );
   if (error) {
     throw new Error(`Leaderboard query failed on public.game_scores: ${error.message}`);
   }

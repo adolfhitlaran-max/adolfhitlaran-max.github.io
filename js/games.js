@@ -11,6 +11,8 @@ const els = {
   message: document.getElementById("message"),
   topScore: document.getElementById("topScore"),
   scoreCount: document.getElementById("scoreCount"),
+  profileStatusName: document.getElementById("profileStatusName"),
+  profileStatusDetail: document.getElementById("profileStatusDetail"),
   scoreForm: document.getElementById("scoreForm"),
   gameName: document.getElementById("gameName"),
   scoreValue: document.getElementById("scoreValue"),
@@ -59,6 +61,11 @@ function setLinkedMessage(prefix, href, label, type = "error") {
     document.createTextNode(".")
   );
   els.message.className = `notice ${type}`.trim();
+}
+
+function setProfileStatus(name, detail) {
+  els.profileStatusName.textContent = name;
+  els.profileStatusDetail.textContent = detail;
 }
 
 function withRejectTimeout(promise, ms, message) {
@@ -136,34 +143,48 @@ async function refreshProfile() {
 
   if (result.error) {
     console.error("Score profile detection failed:", result.error);
+    setProfileStatus("Profile check failed", result.error.message);
     if (!leaderboardError) setMessage(result.error.message, "error");
     return;
   }
 
   if (!currentUser) {
     authProfileError = false;
+    setProfileStatus("Not signed in", "Log in before submitting scores.");
     if (!leaderboardError) setLinkedMessage("Not signed in. Log in before submitting scores.", "./login.html", "Login", "");
     return;
   }
 
   if (!currentProfile?.username) {
     authProfileError = false;
+    setProfileStatus(currentUser.email || "Signed in", "Profile missing. Create a username before submitting scores.");
     if (!leaderboardError) setLinkedMessage("Profile missing. Create a username before submitting scores.", "./profile.html", "Create your profile");
     return;
   }
 
   authProfileError = false;
+  setProfileStatus(displayName(currentProfile), `@${currentProfile.username}`);
   if (!leaderboardError) setMessage("Profile loaded. You can submit scores.", "ok");
 }
 
 async function refreshScores() {
+  let completed = false;
+  const loadingTimeout = window.setTimeout(() => {
+    if (completed) return;
+    renderEmptyLeaderboard("Leaderboard is taking too long to load. Try refresh in a moment.", true);
+    if (!authProfileError) setMessage("Leaderboard is taking too long to load. Your sign-in check can still finish separately.", "error");
+  }, 8000);
+
   setMessage("Loading leaderboard...", "");
+  renderEmptyLeaderboard("Loading leaderboard...");
   try {
     const scores = await withRejectTimeout(
       listScores(els.filterGame.value),
       15000,
       "Leaderboard query timed out while reading public.game_scores."
     );
+    completed = true;
+    window.clearTimeout(loadingTimeout);
     leaderboardError = false;
     els.leaderboard.replaceChildren();
     els.scoreCount.textContent = scores.length;
@@ -192,6 +213,8 @@ async function refreshScores() {
       setMessage("Leaderboard loaded.", "ok");
     }
   } catch (error) {
+    completed = true;
+    window.clearTimeout(loadingTimeout);
     leaderboardError = true;
     console.error("Leaderboard load failed:", error);
     const message = error?.message || "Leaderboard query failed.";
@@ -201,12 +224,12 @@ async function refreshScores() {
 }
 
 async function boot() {
-  await Promise.allSettled([
-    refreshScores(),
-    refreshProfile()
-  ]);
+  setMessage("Checking sign in...", "");
+  renderEmptyLeaderboard("Loading leaderboard...");
+  await refreshProfile();
   pageLoading = false;
   console.log("Page render complete");
+  await refreshScores();
 }
 
 els.scoreForm.addEventListener("submit", async (event) => {

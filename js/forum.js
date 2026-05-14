@@ -352,8 +352,18 @@ async function refreshProfile() {
 }
 
 async function refreshPosts() {
+  let completed = false;
+  const loadingTimeout = window.setTimeout(() => {
+    if (completed) return;
+    renderEmpty(els.postList, "Forum posts are taking too long to load. Try refresh in a moment.");
+    if (!authProfileError) setMessage("Forum posts are taking too long to load. Your sign-in check can still finish separately.", "error");
+  }, 8000);
+
   try {
+    renderEmpty(els.postList, "Loading forum posts...");
     const posts = await listPosts();
+    completed = true;
+    window.clearTimeout(loadingTimeout);
     if (!posts.length) {
       renderEmpty(els.postList, "No posts yet. Start the first thread.");
       showDetailPlaceholder("Open a post to read the thread.");
@@ -376,6 +386,8 @@ async function refreshPosts() {
       await openPost(requestedPost, { updateUrl: false });
     }
   } catch (error) {
+    completed = true;
+    window.clearTimeout(loadingTimeout);
     console.error("Forum posts load failed:", error);
     setMessage(error.message, "error");
     renderEmpty(els.postList, "Posts could not be loaded.");
@@ -407,13 +419,13 @@ async function openPost(postId, options = {}) {
 }
 
 async function boot() {
+  setMessage("Checking sign in...", "");
+  renderEmpty(els.postList, "Loading forum posts...");
   showDetailPlaceholder("Open a post to read the thread.");
-  await Promise.allSettled([
-    refreshProfile(),
-    refreshPosts()
-  ]);
+  await refreshProfile();
   pageLoading = false;
   console.log("Page render complete");
+  await refreshPosts();
 }
 
 els.postForm.addEventListener("submit", async (event) => {
