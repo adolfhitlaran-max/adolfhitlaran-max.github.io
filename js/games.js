@@ -3,7 +3,7 @@ import {
   formatDate,
   getCurrentUserAndProfile,
   listScores,
-  submitScore,
+  saveScore,
   supabase
 } from "./supabaseClient.js";
 
@@ -17,6 +17,7 @@ const els = {
   gameName: document.getElementById("gameName"),
   scoreValue: document.getElementById("scoreValue"),
   filterGame: document.getElementById("filterGame"),
+  leaderboardTitle: document.getElementById("leaderboardTitle"),
   leaderboard: document.getElementById("leaderboard")
 };
 
@@ -68,6 +69,50 @@ function setProfileStatus(name, detail) {
   els.profileStatusDetail.textContent = detail;
 }
 
+function initials(profile) {
+  const source = displayName(profile, profile?.username || "UM");
+  return source
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "UM";
+}
+
+function avatarUrl(profile) {
+  const value = String(profile?.avatar_url || "").trim();
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    if (url.protocol === "http:" || url.protocol === "https:") return value;
+  } catch (_error) {}
+
+  return "";
+}
+
+function avatarNode(profile) {
+  const url = avatarUrl(profile);
+  if (!url) {
+    const fallback = document.createElement("div");
+    fallback.className = "score-avatar-fallback";
+    fallback.textContent = initials(profile);
+    return fallback;
+  }
+
+  const image = document.createElement("img");
+  image.className = "score-avatar";
+  image.src = url;
+  image.alt = `${displayName(profile)} avatar`;
+  image.addEventListener("error", () => {
+    const fallback = document.createElement("div");
+    fallback.className = "score-avatar-fallback";
+    fallback.textContent = initials(profile);
+    image.replaceWith(fallback);
+  }, { once: true });
+  return image;
+}
+
 function withRejectTimeout(promise, ms, message) {
   let timeoutId;
   const timeout = new Promise((_, reject) => {
@@ -115,21 +160,26 @@ function renderScore(row, index) {
   rank.className = "rank";
   appendText(rank, String(index + 1));
 
+  const avatar = avatarNode(row.author);
+
   const main = document.createElement("div");
   main.className = "score-main";
 
   const name = document.createElement("strong");
-  appendText(name, `@${row.author?.username || "anonymous"} - ${displayName(row.author)}`);
+  appendText(name, displayName(row.author));
 
+  const gameLine = document.createElement("span");
+  gameLine.className = "game-line";
+  appendText(gameLine, row.game || "Unknown Game");
   const meta = document.createElement("span");
-  appendText(meta, `${row.game} / ${formatDate(row.created_at)}`);
-  main.append(name, meta);
+  appendText(meta, `@${row.author?.username || "anonymous"} / ${formatDate(row.created_at)}`);
+  main.append(name, gameLine, meta);
 
   const value = document.createElement("div");
   value.className = "score-value";
   appendText(value, Number(row.score || 0).toLocaleString());
 
-  card.append(rank, main, value);
+  card.append(rank, avatar, main, value);
   return card;
 }
 
@@ -168,6 +218,8 @@ async function refreshProfile() {
 }
 
 async function refreshScores() {
+  const selectedGame = els.filterGame.value;
+  els.leaderboardTitle.textContent = selectedGame === "all" ? "Global Leaderboard" : `${selectedGame} Leaderboard`;
   let completed = false;
   const loadingTimeout = window.setTimeout(() => {
     if (completed) return;
@@ -179,7 +231,7 @@ async function refreshScores() {
   renderEmptyLeaderboard("Loading leaderboard...");
   try {
     const scores = await withRejectTimeout(
-      listScores(els.filterGame.value),
+      listScores(selectedGame),
       15000,
       "Leaderboard query timed out while reading public.game_scores."
     );
@@ -240,10 +292,7 @@ els.scoreForm.addEventListener("submit", async (event) => {
   }
 
   try {
-    await submitScore({
-      game: els.gameName.value,
-      score: els.scoreValue.value
-    });
+    await saveScore(els.gameName.value, els.scoreValue.value);
     els.scoreForm.reset();
     setMessage("Score submitted.", "ok");
     await refreshScores();

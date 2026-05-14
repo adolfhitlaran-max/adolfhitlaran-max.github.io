@@ -588,9 +588,15 @@ export async function createComment({ postId, body }) {
   };
 }
 
-export async function submitScore({ game, score }) {
-  const user = await getCurrentUser();
+export async function saveScore(game, score) {
+  const { user, profile, error: profileError } = await getCurrentUserAndProfile();
+  if (profileError) {
+    console.error("Score auth/profile check failed:", profileError);
+    throw profileError;
+  }
+
   if (!user) throw new Error("You need to be logged in to submit a score.");
+  if (!profile?.username) throw new Error("Create a profile username before submitting scores.");
 
   const numericScore = Number.parseInt(score, 10);
   if (!Number.isFinite(numericScore) || numericScore < 0) {
@@ -614,8 +620,21 @@ export async function submitScore({ game, score }) {
     "Score submit timed out."
   );
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.error("Score insert failed on public.game_scores:", error);
+    throw error;
+  }
+
+  return {
+    ...data,
+    author: profile
+  };
+}
+
+window.saveScore = saveScore;
+
+export async function submitScore({ game, score }) {
+  return saveScore(game, score);
 }
 
 export async function listScores(game = "all") {
@@ -637,6 +656,7 @@ export async function listScores(game = "all") {
     "Leaderboard query timed out while reading public.game_scores."
   );
   if (error) {
+    console.error("Leaderboard query failed on public.game_scores:", error);
     throw new Error(`Leaderboard query failed on public.game_scores: ${error.message}`);
   }
 
@@ -648,7 +668,7 @@ export async function listScores(game = "all") {
       "Profile lookup timed out."
     );
   } catch (error) {
-    console.warn("Scores loaded without profile names:", error);
+    console.error("Scores loaded without profile names:", error);
   }
 
   return (data || []).map((score) => ({
