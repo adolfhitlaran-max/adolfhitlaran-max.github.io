@@ -2,7 +2,7 @@ import {
   cleanUsername,
   displayName,
   formatDate,
-  getCurrentUserProfile,
+  getCurrentUserAndProfile,
   getProfile,
   getProfileByUsername,
   getUserActivity,
@@ -36,6 +36,20 @@ const els = {
 
 let currentUser = null;
 let activeProfile = null;
+let pageLoading = true;
+let lastAuthState = {
+  user: null,
+  profile: null,
+  error: null
+};
+
+window.setTimeout(() => {
+  if (!pageLoading) return;
+  setMessage("Still loading. Please refresh or sign in again.", "error");
+  console.log("Profile page auth/profile state", lastAuthState);
+  pageLoading = false;
+  console.log("Page render complete");
+}, 7000);
 
 function fillEditForm(profile = {}) {
   els.editUsername.value = profile.username || "";
@@ -47,6 +61,23 @@ function fillEditForm(profile = {}) {
 function setMessage(text, type = "") {
   els.message.textContent = text;
   els.message.className = `notice ${type}`.trim();
+}
+
+function withAuthTimeout(promise) {
+  let timeoutId;
+  const timeout = new Promise((resolve) => {
+    timeoutId = window.setTimeout(() => {
+      resolve({
+        user: null,
+        profile: null,
+        error: new Error("Still loading. Please refresh or sign in again.")
+      });
+    }, 7000);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
 }
 
 function appendText(parent, text) {
@@ -208,9 +239,11 @@ async function loadRequestedProfile() {
   const params = new URLSearchParams(window.location.search);
   const requestedId = params.get("id");
   const requestedUsername = params.get("username");
-  const auth = await getCurrentUserProfile();
+  const auth = await withAuthTimeout(getCurrentUserAndProfile());
+  lastAuthState = auth;
   currentUser = auth.user;
 
+  if (auth.error) return { profile: null, auth };
   if (requestedId) return { profile: await getProfile(requestedId), auth };
   if (requestedUsername) return { profile: await getProfileByUsername(requestedUsername), auth };
   return { profile: auth.profile, auth };
@@ -221,10 +254,16 @@ async function boot() {
 
   try {
     const { profile, auth } = await loadRequestedProfile();
+    if (auth.error) {
+      renderDefaultProfile("Profile could not be loaded.");
+      setMessage(`Profile load failed: ${auth.error.message}`, "error");
+      return;
+    }
+
     if (!profile) {
       const setupText = auth.user
         ? "No profile exists yet for this account."
-        : "Sign in to create and view your profile.";
+        : "Not signed in. Sign in to create and view your profile.";
       renderDefaultProfile(setupText, !!auth.user);
       setMessage(setupText, auth.user ? "ok" : "");
       return;
@@ -238,6 +277,9 @@ async function boot() {
     console.error("Profile page load failed:", error);
     renderDefaultProfile("Profile could not be loaded.");
     setMessage(error.message, "error");
+  } finally {
+    pageLoading = false;
+    console.log("Page render complete");
   }
 }
 

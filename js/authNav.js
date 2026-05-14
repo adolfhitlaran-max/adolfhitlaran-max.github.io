@@ -129,22 +129,41 @@
     });
   }
 
+  function withAuthTimeout(promise) {
+    let timeoutId;
+    const timeout = new Promise((resolve) => {
+      timeoutId = window.setTimeout(() => {
+        resolve({
+          user: null,
+          profile: null,
+          error: new Error("Auth nav check timed out.")
+        });
+      }, 7000);
+    });
+
+    return Promise.race([promise, timeout]).finally(() => {
+      window.clearTimeout(timeoutId);
+    });
+  }
+
   async function renderAuthNav() {
     const cached = cachedLabel();
     paint(cached || DEFAULT_LABEL, !!cached);
 
     try {
       const auth = await import(AUTH_MODULE_URL);
-      const user = await auth.getCurrentUser();
+      const result = await withAuthTimeout(auth.getCurrentUserAndProfile());
+      const user = result.user;
 
-      if (!user) {
+      if (result.error || !user) {
+        if (result.error) console.error("Auth nav profile check failed:", result.error);
         cacheLabel("");
         paint(DEFAULT_LABEL, false);
         publishAuthState({ signedIn: false, user: null, profile: null, displayName: DEFAULT_LABEL });
         return;
       }
 
-      const profile = await auth.getProfile(user.id);
+      const profile = result.profile;
       const label = auth.displayName(profile, user.email?.split("@")[0] || "Profile");
       cacheLabel(label);
       paint(label, true);

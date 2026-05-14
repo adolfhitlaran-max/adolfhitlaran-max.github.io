@@ -3,7 +3,7 @@ import {
   createPost,
   displayName,
   formatDate,
-  getCurrentUserProfile,
+  getCurrentUserAndProfile,
   getPost,
   listPosts,
   supabase
@@ -36,10 +36,42 @@ const els = {
 let currentUser = null;
 let currentProfile = null;
 let activePostId = null;
+let authProfileError = false;
+let pageLoading = true;
+let lastAuthState = {
+  user: null,
+  profile: null,
+  error: null
+};
+
+window.setTimeout(() => {
+  if (!pageLoading) return;
+  setMessage("Still loading. Please refresh or sign in again.", "error");
+  console.log("Forum page auth/profile state", lastAuthState);
+  pageLoading = false;
+  console.log("Page render complete");
+}, 7000);
 
 function setMessage(text, type = "") {
   els.message.textContent = text;
   els.message.className = `notice ${type}`.trim();
+}
+
+function withTimeout(promise, ms, message) {
+  let timeoutId;
+  const timeout = new Promise((resolve) => {
+    timeoutId = window.setTimeout(() => {
+      resolve({
+        user: null,
+        profile: null,
+        error: new Error(message)
+      });
+    }, ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
 }
 
 function appendText(parent, text) {
@@ -259,21 +291,40 @@ function showDetailPlaceholder(text) {
 
 async function refreshProfile() {
   try {
-    const result = await getCurrentUserProfile();
+    const result = await withTimeout(
+      getCurrentUserAndProfile(),
+      7000,
+      "Still loading. Please refresh or sign in again."
+    );
+    lastAuthState = result;
     currentUser = result.user;
     currentProfile = result.profile;
+    authProfileError = !!result.error;
+
+    if (result.error) {
+      console.error("Forum auth/profile load failed:", result.error);
+      els.profileAvatar.replaceChildren(avatarFallback(null));
+      els.profileName.textContent = currentUser ? "Profile error" : "Not signed in";
+      els.profileDetail.textContent = result.error.message;
+      els.postForm.querySelector("button").disabled = true;
+      setMessage(result.error.message, "error");
+      updateCommentFormState();
+      return;
+    }
 
     if (!currentUser) {
+      authProfileError = false;
       currentProfile = null;
       els.profileAvatar.replaceChildren(avatarFallback(null));
       els.profileName.textContent = "Signed out";
-      els.profileDetail.textContent = "Log in and create a profile before posting.";
+      setLinkedMessage(els.profileDetail, "Not signed in.", "./login.html", "Login");
       els.postForm.querySelector("button").disabled = true;
       updateCommentFormState();
       return;
     }
 
     if (!currentProfile?.username) {
+      authProfileError = false;
       els.profileAvatar.replaceChildren(avatarFallback(null));
       els.profileName.textContent = currentUser.email || "Logged in";
       setLinkedMessage(els.profileDetail, "No username yet.", "./profile.html", "Create your profile");
@@ -282,6 +333,7 @@ async function refreshProfile() {
       return;
     }
 
+    authProfileError = false;
     els.profileAvatar.replaceChildren(avatarNode(currentProfile));
     els.profileName.textContent = displayName(currentProfile);
     els.profileDetail.textContent = `@${currentProfile.username}`;
@@ -289,6 +341,8 @@ async function refreshProfile() {
     updateCommentFormState();
   } catch (error) {
     console.error("Forum profile detection failed:", error);
+    authProfileError = true;
+    lastAuthState = { user: null, profile: null, error };
     setMessage(error.message, "error");
     currentUser = null;
     currentProfile = null;
@@ -308,7 +362,14 @@ async function refreshPosts() {
       updatePostSelection();
     }
 
-    setMessage("Forum synced.", "ok");
+    if (authProfileError) return;
+    if (!currentUser) {
+      setLinkedMessage(els.message, "Not signed in.", "./login.html", "Login");
+    } else if (!currentProfile?.username) {
+      setLinkedMessage(els.message, "Profile missing.", "./profile.html", "Create your profile");
+    } else {
+      setMessage("Forum synced.", "ok");
+    }
 
     const requestedPost = new URLSearchParams(window.location.search).get("post");
     if (!activePostId && requestedPost) {
@@ -347,8 +408,12 @@ async function openPost(postId, options = {}) {
 
 async function boot() {
   showDetailPlaceholder("Open a post to read the thread.");
-  await refreshProfile();
-  await refreshPosts();
+  await Promise.allSettled([
+    refreshProfile(),
+    refreshPosts()
+  ]);
+  pageLoading = false;
+  console.log("Page render complete");
 }
 
 els.postForm.addEventListener("submit", async (event) => {

@@ -17,6 +17,8 @@ window.UMSupabase = {
   supabase
 };
 
+console.log("Supabase client ready");
+
 const PROFILE_COLUMNS = "id, username, display_name, avatar_url, bio, created_at, updated_at";
 const BASE_PROFILE_COLUMNS = "id, username, display_name, created_at, updated_at";
 const FORUM_POST_COLUMNS = "id, user_id, title, body, created_at, updated_at";
@@ -90,6 +92,60 @@ export async function getCurrentUser() {
   return data.user;
 }
 
+export async function getCurrentUserAndProfile() {
+  console.log("Auth check started");
+  const result = {
+    user: null,
+    profile: null,
+    error: null
+  };
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  console.log("Auth check complete", {
+    hasUser: !!userData?.user,
+    hasError: !!userError
+  });
+
+  if (userError) {
+    const message = String(userError.message || "");
+    if (userError.name === "AuthSessionMissingError" || /auth session missing|session.*missing/i.test(message)) {
+      console.log("Profile check complete", { hasProfile: false, skipped: true });
+      return result;
+    }
+
+    console.error("getUser error:", userError);
+    result.error = userError;
+    console.log("Profile check complete", { hasProfile: false, error: true });
+    return result;
+  }
+
+  if (!userData || !userData.user) {
+    console.log("Profile check complete", { hasProfile: false, skipped: true });
+    return result;
+  }
+
+  result.user = userData.user;
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("profile load error:", profileError);
+    result.error = profileError;
+    console.log("Profile check complete", { hasProfile: false, error: true });
+    return result;
+  }
+
+  result.profile = normalizeProfile(profile || null);
+  console.log("Profile check complete", { hasProfile: !!result.profile });
+  return result;
+}
+
+window.getCurrentUserAndProfile = getCurrentUserAndProfile;
+
 export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
@@ -116,50 +172,12 @@ export async function getProfile(userId) {
 }
 
 export async function getCurrentUserProfile() {
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError) {
-    if (
-      userError.name === "AuthSessionMissingError" ||
-      /auth session missing|session.*missing/i.test(userError.message || "")
-    ) {
-      return { user: null, profile: null };
-    }
-    console.error("Supabase auth user lookup failed:", userError);
-    throw userError;
-  }
-
-  const user = userData?.user || null;
-  if (!user) return { user: null, profile: null };
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select(PROFILE_COLUMNS)
-    .eq("id", user.id)
-    .single();
-
-  if (profileError) {
-    if (isMissingOptionalProfileColumn(profileError)) {
-      console.error("Supabase profile extended columns missing:", profileError);
-      const { data: fallbackProfile, error: fallbackError } = await supabase
-        .from("profiles")
-        .select(BASE_PROFILE_COLUMNS)
-        .eq("id", user.id)
-        .single();
-
-      if (!fallbackError) return { user, profile: normalizeProfile(fallbackProfile) };
-      if (fallbackError.code === "PGRST116") return { user, profile: null };
-      console.error("Supabase profile fallback lookup failed:", fallbackError);
-      throw fallbackError;
-    }
-
-    console.error("Supabase profile lookup failed:", profileError);
-    if (profileError.code === "PGRST116") {
-      return { user, profile: null };
-    }
-    throw profileError;
-  }
-
-  return { user, profile: normalizeProfile(profile) };
+  const result = await getCurrentUserAndProfile();
+  if (result.error) throw result.error;
+  return {
+    user: result.user,
+    profile: result.profile
+  };
 }
 
 export async function getProfileByUsername(username) {
