@@ -470,8 +470,7 @@
     import {
       displayName,
       formatDate,
-      getCurrentUser,
-      getProfile,
+      getCurrentUserProfile,
       listScores,
       submitScore,
       supabase
@@ -495,6 +494,21 @@
     function setMessage(text, type = "") {
       els.message.textContent = text;
       els.message.className = `notice ${type}`.trim();
+    }
+
+    function setCreateProfileMessage(prefix) {
+      const link = document.createElement("a");
+      link.href = "./login.html";
+      link.textContent = "Create your profile";
+      link.style.textDecoration = "underline";
+      link.style.fontWeight = "950";
+
+      els.message.replaceChildren(
+        document.createTextNode(`${prefix} `),
+        link,
+        document.createTextNode(".")
+      );
+      els.message.className = "notice error";
     }
 
     function appendText(parent, text) {
@@ -551,10 +565,13 @@
 
     async function refreshProfile() {
       try {
-        currentUser = await withTimeout(getCurrentUser(), 10000, "Profile load timed out.");
-        currentProfile = currentUser
-          ? await withTimeout(getProfile(currentUser.id), 10000, "Profile query timed out.")
-          : null;
+        const result = await withTimeout(
+          getCurrentUserProfile(),
+          10000,
+          "Profile query timed out."
+        );
+        currentUser = result.user;
+        currentProfile = result.profile;
         els.scoreForm.querySelector("button").disabled = !currentProfile?.username;
 
         if (leaderboardError) return;
@@ -562,9 +579,12 @@
         if (!currentUser) {
           setMessage("Log in before submitting scores. The leaderboard is still public.", "");
         } else if (!currentProfile?.username) {
-          setMessage("Create a username on the login page before submitting scores.", "error");
+          setCreateProfileMessage("Create a username before submitting scores.");
+        } else {
+          setMessage("Profile loaded. You can submit scores.", "ok");
         }
       } catch (error) {
+        console.error("Score profile detection failed:", error);
         currentUser = null;
         currentProfile = null;
         els.scoreForm.querySelector("button").disabled = true;
@@ -596,12 +616,13 @@
         if (currentProfile?.username) {
           setMessage("Leaderboard synced. You are ready to submit scores.", "ok");
         } else if (currentUser) {
-          setMessage("Leaderboard loaded. Create a username on the login page before submitting scores.", "error");
+          setCreateProfileMessage("Leaderboard loaded. Create a username before submitting scores.");
         } else {
           setMessage("Leaderboard loaded. Log in before submitting scores.", "");
         }
       } catch (error) {
         leaderboardError = true;
+        console.error("Leaderboard load failed:", error);
         const message = error?.message || "Leaderboard query failed.";
         setMessage(message, "error");
         renderEmptyLeaderboard(message, true);
@@ -609,16 +630,14 @@
     }
 
     async function boot() {
-      await Promise.allSettled([
-        refreshScores(),
-        refreshProfile()
-      ]);
+      await refreshScores();
+      await refreshProfile();
     }
 
     els.scoreForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!currentProfile?.username) {
-        setMessage("Create a username on the login page before submitting scores.", "error");
+        setCreateProfileMessage("Create a username before submitting scores.");
         return;
       }
 
@@ -631,6 +650,7 @@
         setMessage("Score submitted.", "ok");
         await refreshScores();
       } catch (error) {
+        console.error("Score submit failed:", error);
         setMessage(error.message, "error");
       }
     });

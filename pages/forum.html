@@ -407,8 +407,7 @@
       createPost,
       displayName,
       formatDate,
-      getCurrentUser,
-      getProfile,
+      getCurrentUserProfile,
       listPosts,
       supabase
     } from "../js/supabaseClient.js";
@@ -430,6 +429,20 @@
     function setMessage(text, type = "") {
       els.message.textContent = text;
       els.message.className = `notice ${type}`.trim();
+    }
+
+    function setCreateProfileMessage(target, prefix) {
+      const link = document.createElement("a");
+      link.href = "./login.html";
+      link.textContent = "Create your profile";
+      link.style.textDecoration = "underline";
+      link.style.fontWeight = "950";
+
+      target.replaceChildren(
+        document.createTextNode(`${prefix} `),
+        link,
+        document.createTextNode(".")
+      );
     }
 
     function appendText(parent, text) {
@@ -467,7 +480,10 @@
     }
 
     async function refreshProfile() {
-      currentUser = await getCurrentUser();
+      const result = await getCurrentUserProfile();
+      currentUser = result.user;
+      currentProfile = result.profile;
+
       if (!currentUser) {
         currentProfile = null;
         els.profileName.textContent = "Signed out";
@@ -476,10 +492,9 @@
         return;
       }
 
-      currentProfile = await getProfile(currentUser.id);
       if (!currentProfile?.username) {
         els.profileName.textContent = currentUser.email || "Logged in";
-        els.profileDetail.innerHTML = "No username yet. <a href=\"./login.html\">Create your profile</a>.";
+        setCreateProfileMessage(els.profileDetail, "No username yet.");
         els.postForm.querySelector("button").disabled = true;
         return;
       }
@@ -503,6 +518,7 @@
         }
         setMessage("Forum synced.", "ok");
       } catch (error) {
+        console.error("Forum posts load failed:", error);
         setMessage(error.message, "error");
       }
     }
@@ -512,6 +528,7 @@
         await refreshProfile();
         await refreshPosts();
       } catch (error) {
+        console.error("Forum profile detection failed:", error);
         setMessage(error.message, "error");
       }
     }
@@ -519,7 +536,8 @@
     els.postForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!currentProfile?.username) {
-        setMessage("Create a username on the login page before posting.", "error");
+        setMessage("Create a username before posting.", "error");
+        setCreateProfileMessage(els.message, "Create a username before posting.");
         return;
       }
 
@@ -532,6 +550,7 @@
         setMessage("Post published.", "ok");
         await refreshPosts();
       } catch (error) {
+        console.error("Forum post submit failed:", error);
         setMessage(error.message, "error");
       }
     });

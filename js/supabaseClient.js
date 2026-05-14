@@ -72,6 +72,39 @@ export async function getProfile(userId) {
   return data;
 }
 
+export async function getCurrentUserProfile() {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) {
+    if (
+      userError.name === "AuthSessionMissingError" ||
+      /auth session missing|session.*missing/i.test(userError.message || "")
+    ) {
+      return { user: null, profile: null };
+    }
+    console.error("Supabase auth user lookup failed:", userError);
+    throw userError;
+  }
+
+  const user = userData?.user || null;
+  if (!user) return { user: null, profile: null };
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, created_at, updated_at")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError) {
+    console.error("Supabase profile lookup failed:", profileError);
+    if (profileError.code === "PGRST116") {
+      return { user, profile: null };
+    }
+    throw profileError;
+  }
+
+  return { user, profile };
+}
+
 export async function upsertProfile(profile) {
   const user = await getCurrentUser();
   if (!user) throw new Error("You need to be logged in to save a profile.");
