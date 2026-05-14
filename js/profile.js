@@ -25,6 +25,7 @@ const els = {
   scoresList: document.getElementById("scoresList"),
   activityErrors: document.getElementById("activityErrors"),
   editPanel: document.getElementById("editPanel"),
+  editTitle: document.getElementById("editTitle"),
   editForm: document.getElementById("editForm"),
   editUsername: document.getElementById("editUsername"),
   editDisplayName: document.getElementById("editDisplayName"),
@@ -35,6 +36,13 @@ const els = {
 
 let currentUser = null;
 let activeProfile = null;
+
+function fillEditForm(profile = {}) {
+  els.editUsername.value = profile.username || "";
+  els.editDisplayName.value = profile.display_name || "";
+  els.editAvatarUrl.value = profile.avatar_url || "";
+  els.editBio.value = profile.bio || "";
+}
 
 function setMessage(text, type = "") {
   els.message.textContent = text;
@@ -70,12 +78,19 @@ function profileLink(profile) {
   return `./profile.html?username=${encodeURIComponent(profile.username)}`;
 }
 
-function renderDefaultProfile(message) {
+function renderDefaultProfile(message, canCreate = false) {
   els.profileShell.hidden = false;
   els.profileCard.hidden = true;
-  els.editPanel.hidden = true;
-  els.setupPanel.hidden = false;
+  els.editPanel.hidden = !canCreate;
+  els.setupPanel.hidden = canCreate;
   els.setupPanel.querySelector("p").textContent = message;
+
+  if (canCreate) {
+    els.editTitle.textContent = "Create Profile";
+    fillEditForm({
+      username: cleanUsername((currentUser?.email || "").split("@")[0])
+    });
+  }
 }
 
 function renderProfile(profile, isOwnProfile) {
@@ -104,10 +119,8 @@ function renderProfile(profile, isOwnProfile) {
 
   els.editPanel.hidden = !isOwnProfile;
   if (isOwnProfile) {
-    els.editUsername.value = profile.username || "";
-    els.editDisplayName.value = profile.display_name || "";
-    els.editAvatarUrl.value = profile.avatar_url || "";
-    els.editBio.value = profile.bio || "";
+    els.editTitle.textContent = "Edit Profile";
+    fillEditForm(profile);
   }
 }
 
@@ -212,8 +225,8 @@ async function boot() {
       const setupText = auth.user
         ? "No profile exists yet for this account."
         : "Sign in to create and view your profile.";
-      renderDefaultProfile(setupText);
-      setMessage(setupText, auth.user ? "error" : "");
+      renderDefaultProfile(setupText, !!auth.user);
+      setMessage(setupText, auth.user ? "ok" : "");
       return;
     }
 
