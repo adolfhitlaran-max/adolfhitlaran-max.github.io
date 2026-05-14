@@ -17,6 +17,17 @@ window.UMSupabase = {
   supabase
 };
 
+function withQueryTimeout(promise, ms, message) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
+}
+
 export async function getSession() {
   const { data, error } = await supabase.auth.getSession();
   if (error) throw error;
@@ -58,7 +69,6 @@ export async function getProfile(userId) {
     .maybeSingle();
 
   if (error) throw error;
-  window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: data }));
   return data;
 }
 
@@ -83,6 +93,7 @@ export async function upsertProfile(profile) {
     .single();
 
   if (error) throw error;
+  window.dispatchEvent(new CustomEvent("um:profile-updated", { detail: data }));
   return data;
 }
 
@@ -155,6 +166,7 @@ export async function submitScore({ game, score }) {
   };
 
   const { data, error } = await supabase
+    .schema("public")
     .from("game_scores")
     .insert(payload)
     .select("id, user_id, game, score, created_at")
@@ -166,6 +178,7 @@ export async function submitScore({ game, score }) {
 
 export async function listScores(game = "all") {
   let query = supabase
+    .schema("public")
     .from("game_scores")
     .select("id, user_id, game, score, created_at")
     .order("score", { ascending: false })
@@ -177,9 +190,21 @@ export async function listScores(game = "all") {
   }
 
   const { data, error } = await query;
-  if (error) throw error;
+  if (error) {
+    throw new Error(`Leaderboard query failed on public.game_scores: ${error.message}`);
+  }
 
-  const profiles = await getProfilesForUserIds((data || []).map((score) => score.user_id));
+  let profiles = new Map();
+  try {
+    profiles = await withQueryTimeout(
+      getProfilesForUserIds((data || []).map((score) => score.user_id)),
+      5000,
+      "Profile lookup timed out."
+    );
+  } catch (error) {
+    console.warn("Scores loaded without profile names:", error);
+  }
+
   return (data || []).map((score) => ({
     ...score,
     author: profiles.get(score.user_id) || null

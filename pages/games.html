@@ -490,6 +490,7 @@
 
     let currentUser = null;
     let currentProfile = null;
+    let leaderboardError = false;
 
     function setMessage(text, type = "") {
       els.message.textContent = text;
@@ -498,6 +499,28 @@
 
     function appendText(parent, text) {
       parent.appendChild(document.createTextNode(text || ""));
+    }
+
+    function withTimeout(promise, ms, message) {
+      let timeoutId;
+      const timeout = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => reject(new Error(message)), ms);
+      });
+
+      return Promise.race([promise, timeout]).finally(() => {
+        window.clearTimeout(timeoutId);
+      });
+    }
+
+    function renderEmptyLeaderboard(text, isError = false) {
+      els.leaderboard.replaceChildren();
+      els.scoreCount.textContent = "0";
+      els.topScore.textContent = "0";
+
+      const empty = document.createElement("div");
+      empty.className = isError ? "empty notice error" : "empty";
+      empty.textContent = text;
+      els.leaderboard.appendChild(empty);
     }
 
     function renderScore(row, index) {
@@ -527,48 +550,69 @@
     }
 
     async function refreshProfile() {
-      currentUser = await getCurrentUser();
-      currentProfile = currentUser ? await getProfile(currentUser.id) : null;
-      els.scoreForm.querySelector("button").disabled = !currentProfile?.username;
+      try {
+        currentUser = await withTimeout(getCurrentUser(), 10000, "Profile load timed out.");
+        currentProfile = currentUser
+          ? await withTimeout(getProfile(currentUser.id), 10000, "Profile query timed out.")
+          : null;
+        els.scoreForm.querySelector("button").disabled = !currentProfile?.username;
 
-      if (!currentUser) {
-        setMessage("Log in before submitting scores. The leaderboard is still public.", "");
-      } else if (!currentProfile?.username) {
-        setMessage("Create a username on the login page before submitting scores.", "error");
+        if (leaderboardError) return;
+
+        if (!currentUser) {
+          setMessage("Log in before submitting scores. The leaderboard is still public.", "");
+        } else if (!currentProfile?.username) {
+          setMessage("Create a username on the login page before submitting scores.", "error");
+        }
+      } catch (error) {
+        currentUser = null;
+        currentProfile = null;
+        els.scoreForm.querySelector("button").disabled = true;
+        if (!leaderboardError) setMessage(`Profile load failed: ${error.message}`, "error");
       }
     }
 
     async function refreshScores() {
+      setMessage("Loading leaderboard...", "");
       try {
-        const scores = await listScores(els.filterGame.value);
+        const scores = await withTimeout(
+          listScores(els.filterGame.value),
+          15000,
+          "Leaderboard query timed out while reading public.game_scores."
+        );
+        leaderboardError = false;
         els.leaderboard.replaceChildren();
         els.scoreCount.textContent = scores.length;
         els.topScore.textContent = scores[0]?.score ? Number(scores[0].score).toLocaleString() : "0";
 
         if (!scores.length) {
-          const empty = document.createElement("div");
-          empty.className = "empty";
-          empty.textContent = "No scores yet. Submit the first run.";
-          els.leaderboard.appendChild(empty);
+          renderEmptyLeaderboard("No scores yet.");
+          setMessage(currentProfile?.username ? "No scores yet. Submit the first run." : "No scores yet.", "");
+          return;
         } else {
           scores.forEach((score, index) => els.leaderboard.appendChild(renderScore(score, index)));
         }
 
         if (currentProfile?.username) {
           setMessage("Leaderboard synced. You are ready to submit scores.", "ok");
+        } else if (currentUser) {
+          setMessage("Leaderboard loaded. Create a username on the login page before submitting scores.", "error");
+        } else {
+          setMessage("Leaderboard loaded. Log in before submitting scores.", "");
         }
       } catch (error) {
-        setMessage(error.message, "error");
+        leaderboardError = true;
+        const message = error?.message || "Leaderboard query failed.";
+        setMessage(message, "error");
+        renderEmptyLeaderboard(message, true);
       }
     }
 
     async function boot() {
-      try {
-        await refreshProfile();
-        await refreshScores();
-      } catch (error) {
-        setMessage(error.message, "error");
-      }
+      await Promise.allSettled([
+        refreshScores(),
+        refreshProfile()
+      ]);
     }
 
     els.scoreForm.addEventListener("submit", async (event) => {
@@ -595,6 +639,6 @@
     supabase.auth.onAuthStateChange(boot);
     boot();
   </script>
-  <script type="module" src="../js/authNav.js"></script>
+  <script src="../js/authNav.js"></script>
 </body>
 </html>
