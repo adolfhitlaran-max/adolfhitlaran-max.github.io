@@ -2,112 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<meta http-equiv="refresh" content="0; url=play.html?v=timerless-20260515b" />
 <title>Conspiracy Pictionary</title>
-<link rel="stylesheet" href="styles/pictionary.css?v=no-timer-20260515" />
+<script>
+  window.location.replace("play.html?v=timerless-20260515b");
+</script>
 </head>
 <body>
-
-<header class="siteTop">
-    <a class="brandLink" href="../" data-back-link>Games</a>
-    <nav>
-        <a href="../../pages/games.html">Leaderboard</a>
-        <a href="../../pages/profile.html">Profile</a>
-        <a href="../../pages/login.html" data-auth-link>Login</a>
-    </nav>
-</header>
-
-<div id="menuScreen" class="screen">
-    <div class="menuBox">
-        <div class="brand">CONSPIRACY PICTIONARY</div>
-        <p class="tagline">
-            Create a private two-player room, draw the prompt, and keep trading clues until somebody cracks it.
-        </p>
-
-        <div id="profileStatus" class="profile-card">
-            <strong id="profileName">Checking sign in...</strong>
-            <span id="profileDetail">Loading profile.</span>
-        </div>
-
-        <label>Room Code</label>
-        <input id="roomCodeInput" placeholder="Only needed to join" autocomplete="off" />
-
-        <div class="menuButtons">
-            <button id="createRoomBtn">CREATE ROOM</button>
-            <button id="joinRoomBtn">JOIN ROOM</button>
-        </div>
-
-        <div id="roomStatus"></div>
-
-        <div class="smallNote">
-            The creator draws first. First player to 5 points wins and gets an automatic leaderboard score.
-        </div>
-    </div>
-</div>
-
-<div id="gameScreen" class="hidden">
-    <div id="topBar">
-        <div class="room-chip">ROOM: <span id="roomCodeDisplay"></span> <button id="copyRoomBtn" type="button">COPY</button></div>
-        <div id="scoreboard">
-            <span id="player1Name">P1</span> <span id="player1Score">0</span>
-            -
-            <span id="player2Score">0</span> <span id="player2Name">P2</span>
-            <small id="matchTarget">First to 5</small>
-        </div>
-    </div>
-
-    <div id="mainArea">
-        <aside id="leftPanel">
-            <div class="panel">
-                <h3>ROLE</h3>
-                <div id="roleDisplay">Waiting...</div>
-            </div>
-
-            <div class="panel">
-                <h3>THEORY</h3>
-                <div id="secretTheory">Waiting...</div>
-            </div>
-
-            <div class="panel">
-                <h3>TOOLS</h3>
-                <button id="clearCanvasBtn">CLEAR CANVAS</button>
-                <button id="newRoundBtn">NEXT ROUND</button>
-
-                <div class="toolRow">
-                    <label>Brush</label>
-                    <input id="brushSize" type="range" min="2" max="30" value="5" />
-                </div>
-
-                <div class="toolRow">
-                    <label>Color</label>
-                    <input id="brushColor" type="color" value="#111111" />
-                </div>
-            </div>
-        </aside>
-
-        <main id="canvasArea">
-            <canvas id="drawingCanvas" width="1000" height="600"></canvas>
-        </main>
-
-        <aside id="rightPanel">
-            <div class="panel">
-                <h3>GUESSES</h3>
-                <div id="guessLog"></div>
-
-                <div id="guessArea">
-                    <input id="guessInput" placeholder="Type guess" autocomplete="off" />
-                    <button id="sendGuessBtn">SEND</button>
-                </div>
-            </div>
-        </aside>
-    </div>
-</div>
-
-<script src="../back-link.js"></script>
-<script src="../../js/authNav.js"></script>
-<script src="../../js/gameScoreBridge.js"></script>
-<script src="data/conspiracy-prompts.js"></script>
-<script src="scripts/pictionary.js?v=no-timer-20260515"></script>
-
+<p><a href="play.html?v=timerless-20260515b">Open Conspiracy Pictionary</a></p>
 </body>
 </html>
