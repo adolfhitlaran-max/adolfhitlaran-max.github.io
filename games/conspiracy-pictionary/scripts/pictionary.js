@@ -52,6 +52,8 @@
 
   const ctx = els.canvas.getContext("2d");
 
+  document.getElementById("timer")?.remove();
+
   function setStatus(message, type = "") {
     els.roomStatus.textContent = message || "";
     els.roomStatus.className = type;

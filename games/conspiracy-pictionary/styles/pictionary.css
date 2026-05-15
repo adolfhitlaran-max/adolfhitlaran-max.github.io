@@ -48,6 +48,10 @@ a {
   display: none !important;
 }
 
+#timer {
+  display: none !important;
+}
+
 .siteTop {
   position: fixed;
   top: 0;
