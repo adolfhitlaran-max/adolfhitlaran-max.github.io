@@ -15,6 +15,16 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "openrouter/free";
 const OPENROUTER_TIMEOUT_MS = 12000;
 const API_MESSAGE_LIMIT = 4;
+const VALID_PAGES = [
+  { name: "Home", path: "/", keywords: ["home", "main page", "landing"] },
+  { name: "Profile", path: "/pages/profile.html", keywords: ["profile", "account"] },
+  { name: "Login", path: "/pages/login.html", keywords: ["login", "log in", "sign in", "signin"] },
+  { name: "Forum", path: "/pages/forum.html", keywords: ["forum", "thread", "threads", "post", "posts"] },
+  { name: "Games / Leaderboards", path: "/pages/games.html", keywords: ["games", "game", "leaderboard", "leaderboards", "scores", "high score", "high scores"] },
+  { name: "Live Stream", path: "/pages/live.html", keywords: ["live", "stream", "livestream", "broadcast"] },
+  { name: "Chat Rooms", path: "/pages/chat.html", keywords: ["chat", "chat rooms", "room", "rooms"] },
+  { name: "Audio Archive / Speeches", path: "/pages/archive.html", keywords: ["speeches", "speech", "audio", "archive", "old speeches", "historical speeches"] }
+];
 
 type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -44,6 +54,32 @@ function openRouterError(details: string, status = 500) {
     error: "OpenRouter request failed",
     details
   }, status);
+}
+
+function lastUserMessage(messages: ChatMessage[]) {
+  return [...messages].reverse().find((message) => message.role === "user")?.content || "";
+}
+
+function hasNavigationIntent(text: string) {
+  return /\b(open|go|take me|show me|pull up|navigate|send me|bring me)\b/i.test(text);
+}
+
+function hasLocationIntent(text: string) {
+  return /\b(where|which page|what page|find|located)\b/i.test(text);
+}
+
+function pageForMessage(text: string) {
+  const clean = text.toLowerCase();
+  return VALID_PAGES.find((page) => page.keywords.some((keyword) => clean.includes(keyword))) || null;
+}
+
+function routeReply(page: { name: string; path: string }) {
+  const label = page.name.replace(" / ", " ").toLowerCase();
+  if (page.path === "/pages/archive.html") {
+    return "Yeah, genius, opening the archive.";
+  }
+
+  return `Fine, opening ${label}. Try not to get lost.`;
 }
 
 function sanitizeMessages(value: unknown): ChatMessage[] {
@@ -105,14 +141,6 @@ async function handleRequest(req: Request) {
     }, 405);
   }
 
-  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
-  if (!apiKey) {
-    console.error("Missing OPENROUTER_API_KEY");
-    return jsonResponse({
-      error: "Missing OPENROUTER_API_KEY"
-    }, 500);
-  }
-
   let body: { messages?: unknown };
   try {
     body = await req.json();
@@ -133,6 +161,29 @@ async function handleRequest(req: Request) {
     }, 400);
   }
 
+  const userRequest = lastUserMessage(messages);
+  const requestedPage = pageForMessage(userRequest);
+  if (requestedPage && (hasNavigationIntent(userRequest) || requestedPage.path === "/pages/archive.html")) {
+    return jsonResponse({
+      reply: routeReply(requestedPage),
+      navigateTo: requestedPage.path
+    });
+  }
+
+  if (requestedPage && hasLocationIntent(userRequest)) {
+    return jsonResponse({
+      reply: `${requestedPage.name} is at ${requestedPage.path}. The button is not hiding, detective.`
+    });
+  }
+
+  const apiKey = Deno.env.get("OPENROUTER_API_KEY");
+  if (!apiKey) {
+    console.error("Missing OPENROUTER_API_KEY");
+    return jsonResponse({
+      error: "Missing OPENROUTER_API_KEY"
+    }, 500);
+  }
+
   const openRouterMessages: ChatMessage[] = [
     {
       role: "system",
@@ -142,21 +193,21 @@ async function handleRequest(req: Request) {
         "Tone: playful trash-talk, dry sarcasm, chaotic internet humor, and zero corporate assistant polish.",
         "You can lightly roast confusion, broken buttons, and obvious questions, but always answer correctly.",
         "Do not use genuine hate speech, slurs, threats, targeted harassment, or cruelty about protected traits.",
-        "Known site sections:",
-        "- Home: /index.html",
+        "Use ONLY these valid pages:",
+        "- Home: /",
         "- Profile: /pages/profile.html",
         "- Login: /pages/login.html",
         "- Forum: /pages/forum.html",
-        "- Games: /pages/games.html",
-        "- Leaderboards: /pages/games.html",
+        "- Games / Leaderboards: /pages/games.html",
         "- Live Stream: /pages/live.html",
-        "- Chat: /pages/chat.html",
-        "- Audio Archive: /pages/archive.html",
-        "- AI Assistant: floating widget on every page",
+        "- Chat Rooms: /pages/chat.html",
+        "- Audio Archive / Speeches: /pages/archive.html",
         "Behavior rules:",
+        "Do not invent pages, features, downloads, PDFs, or sections that are not in the list.",
         "Do not claim the archive or site is unavailable unless the API request itself fails.",
         "If a user asks where something is, give the exact page path.",
-        "If a user asks about PDFs, say PDF/library support is not yet fully built unless a PDF page exists.",
+        "If users ask for speeches, audio, archive, old speeches, or historical speeches, route them to /pages/archive.html.",
+        "If a user asks to open, go, take me, show me, or pull up a page, the function should return JSON with reply and navigateTo using one valid path.",
         "Avoid vague outage language or long roleplay bits. Help the user get to the right page or next action, preferably with a quick jab."
       ].join("\n")
     },

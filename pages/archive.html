@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Uncensored Media audio archive and speeches." />
+  <title>Audio Archive | Uncensored Media</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050607;
+      --text: #f5efe2;
+      --muted: #b8b7ae;
+      --line: rgba(245, 239, 226, 0.15);
+      --red: #e5242a;
+      --cyan: #00d5ff;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 1rem;
+      background:
+        linear-gradient(135deg, rgba(229, 36, 42, 0.16), transparent 30rem),
+        linear-gradient(315deg, rgba(0, 213, 255, 0.14), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(42rem, 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(1.2rem, 4vw, 2rem);
+      background: rgba(15, 18, 20, 0.88);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(2.2rem, 8vw, 4rem);
+      line-height: 0.92;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    a.button {
+      min-height: 2.9rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0.75rem 1rem;
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 950;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Audio Archive</h1>
+    <p>Opening the speeches archive. If the redirect stalls, yes, the button is literally right there.</p>
+    <a class="button" href="../Divided%20by%20Year/">Open Audio Archive</a>
+  </main>
+
+  <script>
+    window.setTimeout(() => {
+      window.location.replace("../Divided%20by%20Year/");
+    }, 400);
+  </script>
+  <script src="../js/ai-widget.js" defer></script>
+</body>
+</html>

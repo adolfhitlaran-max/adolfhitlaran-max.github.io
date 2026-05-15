@@ -177,6 +177,25 @@
   white-space: pre-wrap;
 }
 
+.um-ai-message-link {
+  justify-self: start;
+  border: 1px solid rgba(0, 213, 255, 0.34);
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  background: rgba(0, 213, 255, 0.08);
+  color: #f5efe2;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.um-ai-message-link:hover,
+.um-ai-message-link:focus-visible {
+  border-color: rgba(0, 213, 255, 0.62);
+  background: rgba(0, 213, 255, 0.14);
+  outline: none;
+}
+
 .um-ai-message.user {
   justify-self: end;
   max-width: 88%;

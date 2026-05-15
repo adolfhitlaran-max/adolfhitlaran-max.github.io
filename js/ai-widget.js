@@ -7,6 +7,16 @@
   const REQUEST_TIMEOUT_MS = 12000;
   const FALLBACK_REPLY = "Archivist AI is having trouble reaching the archive right now. Give it a minute and try again.";
   const TIMEOUT_REPLY = "Archivist AI is taking too long to respond right now.";
+  const VALID_NAV_PATHS = new Set([
+    "/",
+    "/pages/profile.html",
+    "/pages/login.html",
+    "/pages/forum.html",
+    "/pages/games.html",
+    "/pages/live.html",
+    "/pages/chat.html",
+    "/pages/archive.html"
+  ]);
 
   if (window.UMArchivistAIWidgetLoaded) return;
   window.UMArchivistAIWidgetLoaded = true;
@@ -33,6 +43,11 @@
             message.content.trim()
           );
         })
+        .map((message) => ({
+          role: message.role,
+          content: message.content,
+          navigateTo: validNavigatePath(message.navigateTo) ? message.navigateTo : ""
+        }))
         .slice(-MAX_HISTORY);
     } catch (error) {
       console.error("Archivist AI history load failed:", error);
@@ -81,6 +96,13 @@
     const role = createElement("span", "um-ai-message-role", message.role === "user" ? "You" : "Archivist AI");
     const copy = createElement("p", "um-ai-message-text", message.content);
     item.append(role, copy);
+
+    if (validNavigatePath(message.navigateTo)) {
+      const link = createElement("a", "um-ai-message-link", `Open ${message.navigateTo}`);
+      link.href = message.navigateTo;
+      item.appendChild(link);
+    }
+
     return item;
   }
 
@@ -130,10 +152,36 @@
     );
   }
 
+  function validNavigatePath(path) {
+    return typeof path === "string" && VALID_NAV_PATHS.has(path);
+  }
+
+  function navigateAfterRender(path) {
+    if (!validNavigatePath(path)) {
+      console.error("Archivist AI refused invalid navigateTo path:", path);
+      return;
+    }
+
+    window.setTimeout(() => {
+      try {
+        window.location.href = path;
+      } catch (error) {
+        console.error("Archivist AI navigation failed:", {
+          navigateTo: path,
+          error
+        });
+        renderHistory();
+      }
+    }, 650);
+  }
+
   async function fetchReply(messages) {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    const apiMessages = messages.slice(-API_MESSAGE_LIMIT);
+    const apiMessages = messages.slice(-API_MESSAGE_LIMIT).map((message) => ({
+      role: message.role,
+      content: message.content
+    }));
 
     try {
       const response = await fetch(ENDPOINT, {
@@ -194,7 +242,18 @@
         throw new Error(data?.error || "Archivist endpoint returned an empty reply.");
       }
 
-      return reply;
+      const navigateTo = String(data?.navigateTo || "").trim();
+      if (navigateTo && !validNavigatePath(navigateTo)) {
+        console.error("Archivist AI received invalid navigateTo path:", {
+          navigateTo,
+          parsedResponse: data
+        });
+      }
+
+      return {
+        reply,
+        navigateTo: validNavigatePath(navigateTo) ? navigateTo : ""
+      };
     } catch (error) {
       if (isTimeoutError(error)) {
         console.error("Archivist AI request timed out:", {
@@ -221,10 +280,17 @@
     saveHistory();
     setSending(true);
 
+    let navigateTo = "";
+
     try {
       await waitForNextFrame();
-      const reply = await fetchReply(history);
-      history = [...history, { role: "assistant", content: reply }].slice(-MAX_HISTORY);
+      const result = await fetchReply(history);
+      navigateTo = result.navigateTo;
+      history = [...history, {
+        role: "assistant",
+        content: result.reply,
+        navigateTo
+      }].slice(-MAX_HISTORY);
     } catch (error) {
       console.error("Archivist AI request failed:", error);
       const reply = isTimeoutError(error) ? TIMEOUT_REPLY : FALLBACK_REPLY;
@@ -232,6 +298,7 @@
     } finally {
       saveHistory();
       setSending(false);
+      if (navigateTo) navigateAfterRender(navigateTo);
     }
   }
 
