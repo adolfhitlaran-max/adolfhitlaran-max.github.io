@@ -18,14 +18,70 @@
     "/pages/archive.html"
   ]);
   const NAV_ROUTES = [
-    { label: "Home", path: "/", keywords: ["home", "main page", "landing"] },
-    { label: "Profile", path: "/pages/profile.html", keywords: ["profile", "account"] },
-    { label: "Login", path: "/pages/login.html", keywords: ["login", "log in", "sign in", "signin"] },
-    { label: "Forum", path: "/pages/forum.html", keywords: ["forum", "thread", "threads", "post", "posts"] },
-    { label: "Games", path: "/pages/games.html", keywords: ["games", "game", "leaderboard", "leaderboards", "scores", "high score", "high scores"] },
-    { label: "Live Stream", path: "/pages/live.html", keywords: ["live", "stream", "livestream", "broadcast"] },
-    { label: "Chat", path: "/pages/chat.html", keywords: ["chat", "chat rooms", "room", "rooms"] },
-    { label: "Archive", path: "/pages/archive.html", keywords: ["speeches", "speech", "audio", "archive", "old speeches", "historical speeches"] }
+    {
+      label: "Games",
+      path: "/pages/games.html",
+      patterns: [
+        /\b(open|go to|take me to|show)\s+(the\s+)?games?\b/i,
+        /\bleaderboards?\b/i
+      ]
+    },
+    {
+      label: "Forum",
+      path: "/pages/forum.html",
+      patterns: [/\b(open|go to|take me to)\s+(the\s+)?forum\b/i]
+    },
+    {
+      label: "Archive",
+      path: "/pages/archive.html",
+      patterns: [
+        /\b(open|go to|take me to|show)\s+(the\s+)?archive\b/i,
+        /\bspeeches?\b/i,
+        /\baudio\b/i,
+        /\bhistorical speeches\b/i
+      ]
+    },
+    {
+      label: "Live Stream",
+      path: "/pages/live.html",
+      patterns: [
+        /\bopen\s+(the\s+)?live\b/i,
+        /\blivestream\b/i,
+        /\bstream\b/i
+      ]
+    },
+    {
+      label: "Chat",
+      path: "/pages/chat.html",
+      patterns: [
+        /\bopen\s+(the\s+)?chat\b/i,
+        /\bchat rooms?\b/i
+      ]
+    },
+    {
+      label: "Profile",
+      path: "/pages/profile.html",
+      patterns: [
+        /\bopen\s+(my\s+|the\s+)?profile\b/i,
+        /\bmy profile\b/i
+      ]
+    },
+    {
+      label: "Login",
+      path: "/pages/login.html",
+      patterns: [
+        /\blogin\b/i,
+        /\bsign in\b/i
+      ]
+    },
+    {
+      label: "Home",
+      path: "/",
+      patterns: [
+        /\bhome\b/i,
+        /\bhomepage\b/i
+      ]
+    }
   ];
 
   if (window.UMArchivistAIWidgetLoaded) return;
@@ -166,22 +222,12 @@
     return typeof path === "string" && VALID_NAV_PATHS.has(path);
   }
 
-  function hasNavigationIntent(text) {
-    return /\b(open|go|take me|show me|pull up|navigate|send me|bring me)\b/i.test(text);
-  }
-
   function routeForMessage(text) {
-    if (!hasNavigationIntent(text)) return null;
-
-    const clean = text.toLowerCase();
-    return NAV_ROUTES.find((route) => route.keywords.some((keyword) => clean.includes(keyword))) || null;
+    return NAV_ROUTES.find((route) => route.patterns.some((pattern) => pattern.test(text))) || null;
   }
 
-  function navigationReply(route) {
-    if (route.path === "/pages/archive.html") return "Yeah, genius, opening the archive.";
-    if (route.path === "/pages/games.html") return "Fine, opening Games. Try not to get lost.";
-    if (route.path === "/") return "Fine, going home. Brave journey.";
-    return `Fine, opening ${route.label}. Try not to get lost.`;
+  function navigationReply(_route) {
+    return "Fine, opening that page. Try not to break it.";
   }
 
   function navigateAfterRender(path) {

@@ -15,6 +15,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MODEL = "openrouter/free";
 const OPENROUTER_TIMEOUT_MS = 12000;
 const API_MESSAGE_LIMIT = 4;
+const FALLBACK_REPLY = "I had a thought and immediately lost it. Try again, genius.";
 const VALID_PAGES = [
   { name: "Home", path: "/", keywords: ["home", "main page", "landing"] },
   { name: "Profile", path: "/pages/profile.html", keywords: ["profile", "account"] },
@@ -112,17 +113,20 @@ function extractReply(data: unknown): string {
 
   const root = data as {
     choices?: Array<{
+      text?: unknown;
       message?: {
         content?: unknown;
+        reasoning?: unknown;
       };
     }>;
   };
 
-  const content = root.choices?.[0]?.message?.content;
+  const choice = root.choices?.[0];
+  const content = choice?.message?.content;
   if (typeof content === "string") return content.trim();
 
   if (Array.isArray(content)) {
-    return content
+    const joined = content
       .map((part) => {
         if (typeof part === "string") return part;
         if (typeof part === "object" && part !== null && "text" in part) {
@@ -132,9 +136,20 @@ function extractReply(data: unknown): string {
       })
       .join("")
       .trim();
+
+    if (joined) return joined;
   }
 
-  return "";
+  if (typeof choice?.message?.reasoning === "string" && choice.message.reasoning.trim()) {
+    console.error("OpenRouter returned reasoning without content; using safe fallback.");
+    return FALLBACK_REPLY;
+  }
+
+  if (typeof choice?.text === "string" && choice.text.trim()) {
+    return choice.text.trim();
+  }
+
+  return FALLBACK_REPLY;
 }
 
 async function handleRequest(req: Request) {
@@ -285,11 +300,6 @@ async function handleRequest(req: Request) {
   }
 
   const reply = extractReply(data);
-  if (!reply) {
-    console.error("OpenRouter response missing reply:", data);
-    return openRouterError(`OpenRouter response missing choices[0].message.content. Raw response: ${responseText}`);
-  }
-
   return jsonResponse({ reply });
 }
 
