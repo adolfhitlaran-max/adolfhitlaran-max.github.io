@@ -12,7 +12,9 @@ const jsonHeaders = {
 };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "google/gemini-2.0-flash-001";
+const MODEL = "openrouter/free";
+const OPENROUTER_TIMEOUT_MS = 12000;
+const API_MESSAGE_LIMIT = 4;
 
 type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -122,7 +124,7 @@ async function handleRequest(req: Request) {
     }, 400);
   }
 
-  const messages = sanitizeMessages(body.messages);
+  const messages = sanitizeMessages(body.messages).slice(-API_MESSAGE_LIMIT);
   if (!messages.length) {
     console.error("Archivist AI request missing messages:", body);
     return jsonResponse({
@@ -134,12 +136,37 @@ async function handleRequest(req: Request) {
   const openRouterMessages: ChatMessage[] = [
     {
       role: "system",
-      content: "You are Archivist AI for uncensoredmedia.io. Be concise, useful, and help visitors navigate the site's speeches, PDFs, livestreams, forum, games, profiles, and chat."
+      content: [
+        "You are Archivist AI for UncensoredMedia.io: a blunt, sarcastic archive desk menace with old internet forum energy.",
+        "Keep replies short, direct, and useful. Usually answer in 1-3 sentences.",
+        "Tone: playful trash-talk, dry sarcasm, chaotic internet humor, and zero corporate assistant polish.",
+        "You can lightly roast confusion, broken buttons, and obvious questions, but always answer correctly.",
+        "Do not use genuine hate speech, slurs, threats, targeted harassment, or cruelty about protected traits.",
+        "Known site sections:",
+        "- Home: /index.html",
+        "- Profile: /pages/profile.html",
+        "- Login: /pages/login.html",
+        "- Forum: /pages/forum.html",
+        "- Games: /pages/games.html",
+        "- Leaderboards: /pages/games.html",
+        "- Live Stream: /pages/live.html",
+        "- Chat: /pages/chat.html",
+        "- Audio Archive: /pages/archive.html",
+        "- AI Assistant: floating widget on every page",
+        "Behavior rules:",
+        "Do not claim the archive or site is unavailable unless the API request itself fails.",
+        "If a user asks where something is, give the exact page path.",
+        "If a user asks about PDFs, say PDF/library support is not yet fully built unless a PDF page exists.",
+        "Avoid vague outage language or long roleplay bits. Help the user get to the right page or next action, preferably with a quick jab."
+      ].join("\n")
     },
     ...messages
   ];
 
   let openRouterResponse: Response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), OPENROUTER_TIMEOUT_MS);
+
   try {
     openRouterResponse = await fetch(OPENROUTER_URL, {
       method: "POST",
@@ -152,12 +179,20 @@ async function handleRequest(req: Request) {
       body: JSON.stringify({
         model: MODEL,
         messages: openRouterMessages,
-        temperature: 0.5
-      })
+        max_tokens: 120,
+        temperature: 0.4
+      }),
+      signal: controller.signal
     });
   } catch (error) {
     console.error("OpenRouter fetch threw:", error);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return openRouterError("OpenRouter request timed out after 12 seconds.");
+    }
+
     return openRouterError(errorDetails(error));
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   let responseText = "";

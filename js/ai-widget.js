@@ -3,8 +3,10 @@
   const HISTORY_KEY = "umArchivistAiHistory";
   const OPEN_KEY = "umArchivistAiOpen";
   const MAX_HISTORY = 30;
-  const REQUEST_TIMEOUT_MS = 30000;
+  const API_MESSAGE_LIMIT = 4;
+  const REQUEST_TIMEOUT_MS = 12000;
   const FALLBACK_REPLY = "Archivist AI is having trouble reaching the archive right now. Give it a minute and try again.";
+  const TIMEOUT_REPLY = "Archivist AI is taking too long to respond right now.";
 
   if (window.UMArchivistAIWidgetLoaded) return;
   window.UMArchivistAIWidgetLoaded = true;
@@ -97,7 +99,7 @@
     if (pending) {
       historyNode.appendChild(messageNode({
         role: "assistant",
-        content: "Reading the archive..."
+        content: "Archivist AI is typing..."
       }, { pending: true }));
     }
 
@@ -112,9 +114,26 @@
     renderHistory();
   }
 
+  function waitForNextFrame() {
+    return new Promise((resolve) => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  }
+
+  function isTimeoutError(error) {
+    const message = String(error?.message || "").toLowerCase();
+    return (
+      error?.name === "AbortError" ||
+      message.includes("timed out") ||
+      message.includes("taking too long") ||
+      message.includes("aborted")
+    );
+  }
+
   async function fetchReply(messages) {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const apiMessages = messages.slice(-API_MESSAGE_LIMIT);
 
     try {
       const response = await fetch(ENDPOINT, {
@@ -122,7 +141,7 @@
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages: apiMessages }),
         signal: controller.signal
       });
 
@@ -176,6 +195,16 @@
       }
 
       return reply;
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        console.error("Archivist AI request timed out:", {
+          timeoutMs: REQUEST_TIMEOUT_MS,
+          error
+        });
+        throw new Error(TIMEOUT_REPLY);
+      }
+
+      throw error;
     } finally {
       window.clearTimeout(timeoutId);
     }
@@ -193,11 +222,13 @@
     setSending(true);
 
     try {
+      await waitForNextFrame();
       const reply = await fetchReply(history);
       history = [...history, { role: "assistant", content: reply }].slice(-MAX_HISTORY);
     } catch (error) {
       console.error("Archivist AI request failed:", error);
-      history = [...history, { role: "assistant", content: FALLBACK_REPLY }].slice(-MAX_HISTORY);
+      const reply = isTimeoutError(error) ? TIMEOUT_REPLY : FALLBACK_REPLY;
+      history = [...history, { role: "assistant", content: reply }].slice(-MAX_HISTORY);
     } finally {
       saveHistory();
       setSending(false);
