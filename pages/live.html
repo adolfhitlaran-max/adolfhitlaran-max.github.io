@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Uncensored Media livestreams, schedule, and announcements." />
+  <title>Live | Uncensored Media</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050607;
+      --panel: rgba(15, 18, 20, 0.88);
+      --panel-strong: rgba(8, 10, 12, 0.94);
+      --text: #f5efe2;
+      --muted: #b8b7ae;
+      --line: rgba(245, 239, 226, 0.15);
+      --red: #e5242a;
+      --cyan: #00d5ff;
+      --amber: #ffb83d;
+      --green: #8fff6f;
+      --radius: 8px;
+      --max: 1320px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100svh;
+      overflow-x: hidden;
+      background:
+        linear-gradient(130deg, rgba(229, 36, 42, 0.16), transparent 34rem),
+        linear-gradient(300deg, rgba(0, 213, 255, 0.13), transparent 32rem),
+        radial-gradient(circle at 78% 18%, rgba(255, 184, 61, 0.08), transparent 24rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .shell {
+      width: min(var(--max), calc(100% - 2rem));
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 16rem minmax(0, 1fr);
+      gap: 1rem;
+      margin: 0 auto;
+      padding: 1rem 0;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 1rem;
+      height: calc(100svh - 2rem);
+      display: grid;
+      align-content: space-between;
+      gap: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 3.45rem 1rem 1rem;
+      background: var(--panel-strong);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      width: 2.1rem;
+      height: 2.1rem;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--red), rgba(0, 213, 255, 0.72));
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 950;
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .side-nav a,
+    .button {
+      min-height: 2.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(245, 239, 226, 0.16);
+      border-radius: 999px;
+      padding: 0.68rem 0.9rem;
+      background: rgba(245, 239, 226, 0.07);
+      color: var(--text);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .side-nav a {
+      justify-content: flex-start;
+      border-radius: var(--radius);
+      color: rgba(245, 239, 226, 0.78);
+    }
+
+    .side-nav a.active,
+    .side-nav a:hover,
+    .button:hover {
+      border-color: rgba(0, 213, 255, 0.46);
+      background: rgba(0, 213, 255, 0.08);
+      color: white;
+    }
+
+    .sidebar-note {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    main {
+      display: grid;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .hero,
+    .panel,
+    .stream-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+    }
+
+    .hero {
+      min-height: 18rem;
+      display: grid;
+      align-content: end;
+      padding: clamp(1rem, 3vw, 2rem);
+      background:
+        linear-gradient(90deg, rgba(5, 6, 7, 0.97), rgba(5, 6, 7, 0.58), rgba(5, 6, 7, 0.24)),
+        url("../assets/uncensored-media-hero.png") center / cover no-repeat;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 0.75rem;
+      color: var(--amber);
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 2.5rem;
+      height: 2px;
+      background: linear-gradient(90deg, var(--red), var(--cyan));
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin-top: 0; }
+
+    h1 {
+      max-width: 9ch;
+      margin-bottom: 0.8rem;
+      font-size: clamp(3.2rem, 9vw, 6.8rem);
+      line-height: 0.86;
+      text-transform: uppercase;
+    }
+
+    .hero p {
+      max-width: 44rem;
+      margin-bottom: 0;
+      color: rgba(245, 239, 226, 0.82);
+      font-size: 1.05rem;
+    }
+
+    .stream-card {
+      overflow: hidden;
+      background: rgba(5, 6, 7, 0.72);
+    }
+
+    .stream-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--line);
+      padding: 0.9rem 1rem;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      border: 1px solid rgba(229, 36, 42, 0.5);
+      border-radius: 999px;
+      padding: 0.42rem 0.68rem;
+      background: rgba(229, 36, 42, 0.12);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 0.58rem;
+      height: 0.58rem;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 0 0 rgba(229, 36, 42, 0.52);
+      animation: pulse 1.6s ease-out infinite;
+    }
+
+    @keyframes pulse {
+      70% { box-shadow: 0 0 0 0.55rem rgba(229, 36, 42, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(229, 36, 42, 0); }
+    }
+
+    .stream-title {
+      display: grid;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .stream-title h2 {
+      margin: 0;
+      font-size: clamp(1.35rem, 4vw, 2.1rem);
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .stream-title span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .watch-button {
+      border-color: transparent;
+      background: var(--text);
+      color: var(--bg);
+      white-space: nowrap;
+    }
+
+    .embed-wrap {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .embed-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.55fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 1rem;
+    }
+
+    .panel h2 {
+      margin-bottom: 0.85rem;
+      font-size: 1.6rem;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .list {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .item {
+      border: 1px solid rgba(245, 239, 226, 0.12);
+      border-radius: var(--radius);
+      padding: 0.85rem;
+      background: rgba(5, 6, 7, 0.46);
+    }
+
+    .item strong,
+    .item span {
+      display: block;
+    }
+
+    .item strong {
+      color: white;
+      font-size: 1rem;
+    }
+
+    .item span {
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .announcement strong {
+      color: var(--cyan);
+    }
+
+    @media (max-width: 940px) {
+      .shell,
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .side-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(var(--max), calc(100% - 1rem));
+        padding: 0.5rem 0;
+      }
+
+      .side-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stream-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .watch-button {
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Live page navigation">
+      <div>
+        <a class="brand" href="../index.html">
+          <span class="brand-mark">UM</span>
+          <span>Uncensored Media</span>
+        </a>
+        <nav class="side-nav" aria-label="Primary">
+          <a href="../index.html">Home</a>
+          <a href="./forum.html">Forum</a>
+          <a href="../games/">Games</a>
+          <a href="../Divided%20by%20Year/">Audio Archive</a>
+          <a href="./profile.html">Profile</a>
+          <a class="active" href="./live.html">Live</a>
+        </nav>
+      </div>
+      <p class="sidebar-note">Live streams, marathons, discussions, and community programming from the Uncensored Media archive.</p>
+    </aside>
+
+    <main>
+      <section class="hero" aria-labelledby="liveTitle">
+        <p class="eyebrow">Broadcast Room</p>
+        <h1 id="liveTitle">Live</h1>
+        <p>Watch the current YouTube livestream, check the upcoming schedule, and keep up with archive announcements.</p>
+      </section>
+
+      <section class="stream-card" aria-label="YouTube livestream">
+        <div class="stream-head">
+          <div class="stream-title">
+            <span class="live-pill"><span class="live-dot" aria-hidden="true"></span> Live Now</span>
+            <h2 id="streamTitle">Uncensored Media Livestream</h2>
+            <span id="streamMeta">Streaming from Historical Speeches</span>
+          </div>
+          <a id="watchOnYoutube" class="button watch-button" href="https://www.youtube.com/@HistoricalSpeeches-f4q/live" target="_blank" rel="noopener">Watch on YouTube</a>
+        </div>
+
+        <div class="embed-wrap">
+          <iframe
+            src="https://www.youtube.com/embed/live_stream?channel=UCTcMarWDDz46J95mZdX3U4A"
+            title="Uncensored Media YouTube livestream"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel">
+          <p class="eyebrow">Upcoming</p>
+          <h2>Schedule</h2>
+          <div id="scheduleList" class="list" aria-live="polite"></div>
+        </article>
+
+        <article class="panel">
+          <p class="eyebrow">Updates</p>
+          <h2>Announcements</h2>
+          <div id="announcementList" class="list" aria-live="polite"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/live.js"></script>
+  <script src="../js/authNav.js"></script>
+</body>
+</html>
