@@ -74,11 +74,19 @@ function pageForMessage(text: string) {
 }
 
 function routeReply(page: { name: string; path: string }) {
-  const label = page.name.replace(" / ", " ").toLowerCase();
   if (page.path === "/pages/archive.html") {
     return "Yeah, genius, opening the archive.";
   }
 
+  if (page.path === "/pages/games.html") {
+    return "Fine, opening Games. Try not to get lost.";
+  }
+
+  if (page.path === "/") {
+    return "Fine, going home. Brave journey.";
+  }
+
+  const label = page.name.replace(" / ", " ");
   return `Fine, opening ${label}. Try not to get lost.`;
 }
 

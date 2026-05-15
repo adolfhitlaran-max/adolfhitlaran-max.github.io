@@ -17,6 +17,16 @@
     "/pages/chat.html",
     "/pages/archive.html"
   ]);
+  const NAV_ROUTES = [
+    { label: "Home", path: "/", keywords: ["home", "main page", "landing"] },
+    { label: "Profile", path: "/pages/profile.html", keywords: ["profile", "account"] },
+    { label: "Login", path: "/pages/login.html", keywords: ["login", "log in", "sign in", "signin"] },
+    { label: "Forum", path: "/pages/forum.html", keywords: ["forum", "thread", "threads", "post", "posts"] },
+    { label: "Games", path: "/pages/games.html", keywords: ["games", "game", "leaderboard", "leaderboards", "scores", "high score", "high scores"] },
+    { label: "Live Stream", path: "/pages/live.html", keywords: ["live", "stream", "livestream", "broadcast"] },
+    { label: "Chat", path: "/pages/chat.html", keywords: ["chat", "chat rooms", "room", "rooms"] },
+    { label: "Archive", path: "/pages/archive.html", keywords: ["speeches", "speech", "audio", "archive", "old speeches", "historical speeches"] }
+  ];
 
   if (window.UMArchivistAIWidgetLoaded) return;
   window.UMArchivistAIWidgetLoaded = true;
@@ -156,15 +166,34 @@
     return typeof path === "string" && VALID_NAV_PATHS.has(path);
   }
 
+  function hasNavigationIntent(text) {
+    return /\b(open|go|take me|show me|pull up|navigate|send me|bring me)\b/i.test(text);
+  }
+
+  function routeForMessage(text) {
+    if (!hasNavigationIntent(text)) return null;
+
+    const clean = text.toLowerCase();
+    return NAV_ROUTES.find((route) => route.keywords.some((keyword) => clean.includes(keyword))) || null;
+  }
+
+  function navigationReply(route) {
+    if (route.path === "/pages/archive.html") return "Yeah, genius, opening the archive.";
+    if (route.path === "/pages/games.html") return "Fine, opening Games. Try not to get lost.";
+    if (route.path === "/") return "Fine, going home. Brave journey.";
+    return `Fine, opening ${route.label}. Try not to get lost.`;
+  }
+
   function navigateAfterRender(path) {
     if (!validNavigatePath(path)) {
       console.error("Archivist AI refused invalid navigateTo path:", path);
       return;
     }
 
+    console.log("Archivist navigation requested", path);
     window.setTimeout(() => {
       try {
-        window.location.href = path;
+        window.location.assign(path);
       } catch (error) {
         console.error("Archivist AI navigation failed:", {
           navigateTo: path,
@@ -172,7 +201,7 @@
         });
         renderHistory();
       }
-    }, 650);
+    }, 500);
   }
 
   async function fetchReply(messages) {
@@ -278,6 +307,21 @@
     input.value = "";
     history = [...history, { role: "user", content }].slice(-MAX_HISTORY);
     saveHistory();
+
+    const route = routeForMessage(content);
+    if (route) {
+      const targetPath = route.path;
+      history = [...history, {
+        role: "assistant",
+        content: navigationReply(route),
+        navigateTo: targetPath
+      }].slice(-MAX_HISTORY);
+      saveHistory();
+      renderHistory();
+      navigateAfterRender(targetPath);
+      return;
+    }
+
     setSending(true);
 
     let navigateTo = "";
