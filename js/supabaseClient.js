@@ -71,6 +71,16 @@ function missingExtendedProfileColumnsError() {
   );
 }
 
+function isMissingAvatarBucket(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    error?.statusCode === "404" ||
+    error?.status === 404 ||
+    message.includes("bucket not found") ||
+    message.includes("storage bucket not found")
+  );
+}
+
 function normalizeProfile(profile) {
   if (!profile) return null;
   return {
@@ -340,6 +350,9 @@ export async function uploadAvatar(file) {
 
   if (error) {
     console.error("Supabase avatar upload failed:", error);
+    if (isMissingAvatarBucket(error)) {
+      throw new Error("Avatar upload failed because the Supabase Storage bucket 'avatars' does not exist yet. Run supabase/avatar-storage-setup.sql in the Supabase SQL Editor, then try again.");
+    }
     throw new Error(`Avatar upload failed: ${error.message}`);
   }
 

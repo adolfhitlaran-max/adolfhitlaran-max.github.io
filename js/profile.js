@@ -115,22 +115,41 @@ function avatarUrl(profile) {
   return "";
 }
 
+function showAvatarImage(image, fallback, url, alt, fallbackText) {
+  if (url) {
+    image.onload = () => {
+      image.hidden = false;
+      fallback.hidden = true;
+    };
+    image.onerror = () => {
+      image.removeAttribute("src");
+      image.hidden = true;
+      fallback.textContent = fallbackText;
+      fallback.hidden = false;
+    };
+    fallback.hidden = true;
+    image.alt = alt;
+    image.src = url;
+    image.hidden = false;
+    return;
+  }
+
+  image.onload = null;
+  image.onerror = null;
+  image.removeAttribute("src");
+  image.hidden = true;
+  fallback.textContent = fallbackText;
+  fallback.hidden = false;
+}
+
 function updateUploadPreview(url, status) {
   if (pendingAvatarObjectUrl) {
     URL.revokeObjectURL(pendingAvatarObjectUrl);
     pendingAvatarObjectUrl = "";
   }
 
-  if (url) {
-    els.avatarUploadPreview.src = url;
-    els.avatarUploadPreview.hidden = false;
-    els.avatarUploadFallback.hidden = true;
-  } else {
-    els.avatarUploadPreview.removeAttribute("src");
-    els.avatarUploadPreview.hidden = true;
-    els.avatarUploadFallback.hidden = false;
-    els.avatarUploadFallback.textContent = initials(activeProfile || { username: els.editUsername.value || "UM" });
-  }
+  const fallbackText = initials(activeProfile || { username: els.editUsername.value || "UM" });
+  showAvatarImage(els.avatarUploadPreview, els.avatarUploadFallback, url, "Selected profile picture", fallbackText);
 
   els.avatarUploadStatus.textContent = status;
 }
@@ -162,17 +181,13 @@ function renderProfile(profile, isOwnProfile) {
   els.setupPanel.hidden = true;
 
   const url = avatarUrl(profile);
-  if (url) {
-    els.avatarImage.src = url;
-    els.avatarImage.alt = `${displayName(profile, profile.username)} avatar`;
-    els.avatarImage.hidden = false;
-    els.avatarFallback.hidden = true;
-  } else {
-    els.avatarImage.removeAttribute("src");
-    els.avatarImage.hidden = true;
-    els.avatarFallback.hidden = false;
-    els.avatarFallback.textContent = initials(profile);
-  }
+  showAvatarImage(
+    els.avatarImage,
+    els.avatarFallback,
+    url,
+    `${displayName(profile, profile.username)} avatar`,
+    initials(profile)
+  );
 
   els.username.textContent = `@${profile.username || "unnamed"}`;
   els.displayName.textContent = displayName(profile, "Unnamed Profile");
@@ -371,9 +386,7 @@ els.avatarFile.addEventListener("change", () => {
   }
 
   pendingAvatarObjectUrl = URL.createObjectURL(file);
-  els.avatarUploadPreview.src = pendingAvatarObjectUrl;
-  els.avatarUploadPreview.hidden = false;
-  els.avatarUploadFallback.hidden = true;
+  showAvatarImage(els.avatarUploadPreview, els.avatarUploadFallback, pendingAvatarObjectUrl, "Selected profile picture", initials(activeProfile));
   els.avatarUploadStatus.textContent = `${file.name} / ${(file.size / 1024 / 1024).toFixed(1)} MB`;
 });
 
