@@ -253,7 +253,7 @@ button:disabled {
 #topBar {
   min-height: 4.1rem;
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) 5rem minmax(16rem, 1fr);
+  grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 1fr);
   align-items: center;
   gap: 0.8rem;
   border-bottom: 1px solid var(--line);
@@ -279,20 +279,6 @@ button:disabled {
   min-height: 2rem;
   padding: 0.35rem 0.6rem;
   font-size: 0.72rem;
-}
-
-#timer {
-  justify-self: center;
-  width: 4.2rem;
-  height: 3rem;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(255, 184, 61, 0.36);
-  border-radius: var(--radius);
-  color: var(--amber);
-  background: rgba(255, 184, 61, 0.08);
-  font-size: 1.65rem;
-  font-weight: 950;
 }
 
 #scoreboard {

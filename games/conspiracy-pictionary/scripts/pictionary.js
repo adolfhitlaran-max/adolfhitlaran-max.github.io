@@ -1,6 +1,5 @@
 (() => {
   const MATCH_POINTS = 5;
-  const ROUND_SECONDS = 90;
   const AUTH_MODULE_URL = new URL("../../js/supabaseClient.js", window.location.href).href;
   const LOGIN_URL = "../../pages/login.html";
   const PROFILE_URL = "../../pages/profile.html";
@@ -18,8 +17,6 @@
   let lastX = 0;
   let lastY = 0;
   let channel = null;
-  let timerId = null;
-  let secondsLeft = ROUND_SECONDS;
   let booted = false;
 
   const clientId = crypto.randomUUID ? crypto.randomUUID() : String(Math.random());
@@ -43,7 +40,6 @@
     player1Score: document.getElementById("player1Score"),
     player2Score: document.getElementById("player2Score"),
     matchTarget: document.getElementById("matchTarget"),
-    timer: document.getElementById("timer"),
     canvas: document.getElementById("drawingCanvas"),
     guessInput: document.getElementById("guessInput"),
     sendGuessBtn: document.getElementById("sendGuessBtn"),
@@ -176,7 +172,6 @@
       els.roleDisplay.textContent = data.winner_id === currentUser?.id ? "YOU WON" : "MATCH COMPLETE";
       els.secretTheory.textContent = `${winnerName} wins the room.`;
       setStatus(`Match complete. ${winnerName} reached ${MATCH_POINTS}.`, "ok");
-      stopTimer();
       maybeSaveFinalScore(data);
     } else if (data.status === "waiting") {
       els.roleDisplay.textContent = "WAITING";
@@ -186,13 +181,11 @@
       els.roleDisplay.textContent = isDrawer ? "DRAWER" : "GUESSER";
       els.secretTheory.textContent = isDrawer ? data.theory : "Hidden";
       setStatus(isDrawer ? "Draw the theory. Use the mark button if a guess is right." : "Guess what the drawing means.", "ok");
-      startLocalTimer();
     }
 
     if (previousRound && previousRound !== data.round_number) {
       clearCanvasLocal();
       els.guessLog.replaceChildren();
-      resetTimer();
     }
 
     setControls();
@@ -593,31 +586,6 @@
       console.error("Pictionary room update failed:", error);
       setStatus(`Room update failed: ${error.message}`, "error");
     }
-  }
-
-  function startLocalTimer() {
-    if (timerId) return;
-
-    timerId = setInterval(() => {
-      if (!isDrawer || roomData?.status !== "playing") return;
-      secondsLeft -= 1;
-      els.timer.textContent = secondsLeft;
-
-      if (secondsLeft <= 0) {
-        resetTimer();
-        nextRound();
-      }
-    }, 1000);
-  }
-
-  function stopTimer() {
-    if (timerId) clearInterval(timerId);
-    timerId = null;
-  }
-
-  function resetTimer() {
-    secondsLeft = ROUND_SECONDS;
-    els.timer.textContent = secondsLeft;
   }
 
   function maybeSaveFinalScore(data) {
