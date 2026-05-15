@@ -126,14 +126,53 @@
         signal: controller.signal
       });
 
+      const responseText = await response.text();
+
       if (!response.ok) {
-        throw new Error(`Archivist endpoint returned ${response.status}.`);
+        console.error("Archivist AI endpoint failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          responseText
+        });
+
+        let details = responseText;
+        try {
+          const errorJson = responseText ? JSON.parse(responseText) : null;
+          details = errorJson?.details || errorJson?.error || responseText;
+        } catch (parseError) {
+          console.error("Archivist AI error response JSON parse failed:", {
+            status: response.status,
+            statusText: response.statusText,
+            responseText,
+            parseError
+          });
+        }
+
+        throw new Error(details || `Archivist endpoint returned ${response.status}.`);
       }
 
-      const data = await response.json();
+      let data = null;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error("Archivist AI response JSON parse failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          responseText,
+          parseError
+        });
+        throw new Error("Archivist endpoint returned invalid JSON.");
+      }
+
       const reply = String(data?.reply || "").trim();
       if (!reply) {
-        throw new Error("Archivist endpoint returned an empty reply.");
+        console.error("Archivist AI response missing reply:", {
+          status: response.status,
+          statusText: response.statusText,
+          responseText,
+          parsedResponse: data
+        });
+        throw new Error(data?.error || "Archivist endpoint returned an empty reply.");
       }
 
       return reply;
