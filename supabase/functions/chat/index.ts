@@ -12,7 +12,7 @@ const jsonHeaders = {
 };
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "openai/gpt-4o-mini";
+const MODEL = "google/gemini-2.0-flash-001";
 
 type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -27,7 +27,21 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 }
 
 function errorDetails(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+
+  try {
+    return JSON.stringify(error);
+  } catch (_jsonError) {
+    return "Unknown error";
+  }
+}
+
+function openRouterError(details: string, status = 500) {
+  return jsonResponse({
+    error: "OpenRouter request failed",
+    details
+  }, status);
 }
 
 function sanitizeMessages(value: unknown): ChatMessage[] {
@@ -35,21 +49,51 @@ function sanitizeMessages(value: unknown): ChatMessage[] {
 
   return value
     .map((message) => {
-      const rawRole = String(message?.role || "user");
-      const role = rawRole === "system" || rawRole === "assistant" ? rawRole : "user";
-      const content = String(message?.content || "").trim().slice(0, 4000);
+      const source = typeof message === "object" && message !== null
+        ? (message as Record<string, unknown>)
+        : {};
+      const rawRole = String(source.role || "user");
+      const role: ChatMessage["role"] = rawRole === "system" || rawRole === "assistant" ? rawRole : "user";
+      const content = String(source.content || "").trim().slice(0, 4000);
 
       return { role, content };
     })
     .filter((message) => message.content);
 }
 
-Deno.serve(async (req) => {
+function extractReply(data: unknown): string {
+  if (typeof data !== "object" || data === null) return "";
+
+  const root = data as {
+    choices?: Array<{
+      message?: {
+        content?: unknown;
+      };
+    }>;
+  };
+
+  const content = root.choices?.[0]?.message?.content;
+  if (typeof content === "string") return content.trim();
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (typeof part === "object" && part !== null && "text" in part) {
+          return String((part as { text?: unknown }).text || "");
+        }
+        return "";
+      })
+      .join("")
+      .trim();
+  }
+
+  return "";
+}
+
+async function handleRequest(req: Request) {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: corsHeaders
-    });
+    return jsonResponse({ ok: true });
   }
 
   if (req.method !== "POST") {
@@ -61,9 +105,9 @@ Deno.serve(async (req) => {
 
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) {
+    console.error("Missing OPENROUTER_API_KEY");
     return jsonResponse({
-      error: "Missing OPENROUTER_API_KEY",
-      details: "Set OPENROUTER_API_KEY in the Supabase Edge Function secrets before using Archivist AI."
+      error: "Missing OPENROUTER_API_KEY"
     }, 500);
   }
 
@@ -80,6 +124,7 @@ Deno.serve(async (req) => {
 
   const messages = sanitizeMessages(body.messages);
   if (!messages.length) {
+    console.error("Archivist AI request missing messages:", body);
     return jsonResponse({
       error: "No messages provided",
       details: "Send a JSON body shaped like { \"messages\": [{ \"role\": \"user\", \"content\": \"...\" }] }."
@@ -94,8 +139,9 @@ Deno.serve(async (req) => {
     ...messages
   ];
 
+  let openRouterResponse: Response;
   try {
-    const openRouterResponse = await fetch(OPENROUTER_URL, {
+    openRouterResponse = await fetch(OPENROUTER_URL, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
@@ -109,58 +155,57 @@ Deno.serve(async (req) => {
         temperature: 0.5
       })
     });
-
-    const responseText = await openRouterResponse.text();
-
-    if (!openRouterResponse.ok) {
-      console.error("OpenRouter request failed:", {
-        status: openRouterResponse.status,
-        statusText: openRouterResponse.statusText,
-        responseText
-      });
-
-      return jsonResponse({
-        error: "OpenRouter request failed",
-        details: responseText || `${openRouterResponse.status} ${openRouterResponse.statusText}`
-      }, 502);
-    }
-
-    let data: {
-      choices?: Array<{
-        message?: {
-          content?: string;
-        };
-      }>;
-    };
-
-    try {
-      data = JSON.parse(responseText);
-    } catch (error) {
-      console.error("OpenRouter JSON parse failed:", {
-        responseText,
-        error
-      });
-
-      return jsonResponse({
-        error: "OpenRouter returned invalid JSON",
-        details: errorDetails(error)
-      }, 502);
-    }
-
-    const reply = String(data.choices?.[0]?.message?.content || "").trim();
-    if (!reply) {
-      console.error("OpenRouter response missing reply:", data);
-      return jsonResponse({
-        error: "OpenRouter response missing reply",
-        details: responseText
-      }, 502);
-    }
-
-    return jsonResponse({ reply });
   } catch (error) {
-    console.error("Archivist AI OpenRouter error:", error);
+    console.error("OpenRouter fetch threw:", error);
+    return openRouterError(errorDetails(error));
+  }
+
+  let responseText = "";
+  try {
+    responseText = await openRouterResponse.text();
+  } catch (error) {
+    console.error("OpenRouter response text read failed:", error);
+    return openRouterError(errorDetails(error));
+  }
+
+  if (!openRouterResponse.ok) {
+    console.error("OpenRouter request failed:", {
+      status: openRouterResponse.status,
+      statusText: openRouterResponse.statusText,
+      responseText
+    });
+
+    return openRouterError(responseText || `${openRouterResponse.status} ${openRouterResponse.statusText}`);
+  }
+
+  let data: unknown;
+  try {
+    data = responseText ? JSON.parse(responseText) : null;
+  } catch (error) {
+    console.error("OpenRouter JSON parse failed:", {
+      responseText,
+      error
+    });
+
+    return openRouterError(`OpenRouter returned invalid JSON: ${errorDetails(error)}`);
+  }
+
+  const reply = extractReply(data);
+  if (!reply) {
+    console.error("OpenRouter response missing reply:", data);
+    return openRouterError(`OpenRouter response missing choices[0].message.content. Raw response: ${responseText}`);
+  }
+
+  return jsonResponse({ reply });
+}
+
+Deno.serve(async (req) => {
+  try {
+    return await handleRequest(req);
+  } catch (error) {
+    console.error("Archivist AI unhandled function error:", error);
     return jsonResponse({
-      error: "Archivist AI request failed",
+      error: "Archivist AI function failed",
       details: errorDetails(error)
     }, 500);
   }
