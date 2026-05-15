@@ -4,9 +4,10 @@
   const OPEN_KEY = "umArchivistAiOpen";
   const MAX_HISTORY = 30;
   const API_MESSAGE_LIMIT = 4;
-  const REQUEST_TIMEOUT_MS = 12000;
+  const REQUEST_TIMEOUT_MS = 20000;
+  const DEBUG = window.localStorage.getItem("umArchivistAiDebug") === "1";
   const FALLBACK_REPLY = "Archivist AI is having trouble reaching the archive right now. Give it a minute and try again.";
-  const TIMEOUT_REPLY = "Archivist AI is taking too long to respond right now.";
+  const TIMEOUT_REPLY = "Archivist AI took too long to answer. Free robot brain is slow today.";
   const VALID_NAV_PATHS = new Set([
     "/",
     "/pages/profile.html",
@@ -19,70 +20,97 @@
   ]);
   const NAV_ROUTES = [
     {
-      label: "Games",
       path: "/pages/games.html",
-      patterns: [
-        /\b(open|go to|take me to|show)\s+(the\s+)?games?\b/i,
-        /\bleaderboards?\b/i
+      phrases: [
+        "games",
+        "game page",
+        "arcade",
+        "leaderboard",
+        "leaderboards",
+        "scores",
+        "high scores"
       ]
     },
     {
-      label: "Forum",
       path: "/pages/forum.html",
-      patterns: [/\b(open|go to|take me to)\s+(the\s+)?forum\b/i]
+      phrases: [
+        "forum",
+        "forums",
+        "posts",
+        "discussion",
+        "discussions"
+      ]
     },
     {
-      label: "Archive",
       path: "/pages/archive.html",
-      patterns: [
-        /\b(open|go to|take me to|show)\s+(the\s+)?archive\b/i,
-        /\bspeeches?\b/i,
-        /\baudio\b/i,
-        /\bhistorical speeches\b/i
+      phrases: [
+        "archive",
+        "audio",
+        "speeches",
+        "historical speeches",
+        "speech",
+        "old speeches",
+        "recordings"
       ]
     },
     {
-      label: "Live Stream",
       path: "/pages/live.html",
-      patterns: [
-        /\bopen\s+(the\s+)?live\b/i,
-        /\blivestream\b/i,
-        /\bstream\b/i
+      phrases: [
+        "live",
+        "livestream",
+        "stream",
+        "youtube",
+        "broadcast"
       ]
     },
     {
-      label: "Chat",
       path: "/pages/chat.html",
-      patterns: [
-        /\bopen\s+(the\s+)?chat\b/i,
-        /\bchat rooms?\b/i
+      phrases: [
+        "chat",
+        "chat rooms",
+        "rooms",
+        "global chat",
+        "stream chat"
       ]
     },
     {
-      label: "Profile",
       path: "/pages/profile.html",
-      patterns: [
-        /\bopen\s+(my\s+|the\s+)?profile\b/i,
-        /\bmy profile\b/i
+      phrases: [
+        "profile",
+        "my profile",
+        "account"
       ]
     },
     {
-      label: "Login",
       path: "/pages/login.html",
-      patterns: [
-        /\blogin\b/i,
-        /\bsign in\b/i
+      phrases: [
+        "login",
+        "log in",
+        "sign in",
+        "signup",
+        "sign up"
       ]
     },
     {
-      label: "Home",
       path: "/",
-      patterns: [
-        /\bhome\b/i,
-        /\bhomepage\b/i
+      phrases: [
+        "home",
+        "homepage",
+        "main page"
       ]
     }
   ];
+  const NAV_ACTION_WORDS = new Set([
+    "open",
+    "go",
+    "take",
+    "show",
+    "pull",
+    "bring",
+    "send",
+    "navigate",
+    "launch"
+  ]);
 
   if (window.UMArchivistAIWidgetLoaded) return;
   window.UMArchivistAIWidgetLoaded = true;
@@ -164,7 +192,7 @@
     item.append(role, copy);
 
     if (validNavigatePath(message.navigateTo)) {
-      const link = createElement("a", "um-ai-message-link", `Open ${message.navigateTo}`);
+      const link = createElement("a", "um-ai-message-link", "Open page");
       link.href = message.navigateTo;
       item.appendChild(link);
     }
@@ -222,12 +250,50 @@
     return typeof path === "string" && VALID_NAV_PATHS.has(path);
   }
 
-  function routeForMessage(text) {
-    return NAV_ROUTES.find((route) => route.patterns.some((pattern) => pattern.test(text))) || null;
+  function normalizeNavigationText(message) {
+    return String(message || "")
+      .toLowerCase()
+      .replace(/[^\w\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
-  function navigationReply(_route) {
-    return "Fine, opening that page. Try not to break it.";
+  function hasNavigationAction(cleanText) {
+    return cleanText.split(" ").some((word) => NAV_ACTION_WORDS.has(word));
+  }
+
+  function hasRoutePhrase(cleanText, phrase) {
+    return new RegExp(`\\b${phrase.replace(/\s+/g, "\\s+")}\\b`, "i").test(cleanText);
+  }
+
+  function detectNavigationIntent(message) {
+    const cleanText = normalizeNavigationText(message);
+    console.log("Navigation intent checked", cleanText);
+
+    if (!cleanText) {
+      console.log("No navigation intent", cleanText);
+      return "";
+    }
+
+    const exactRoute = NAV_ROUTES.find((route) => route.phrases.includes(cleanText));
+    if (exactRoute) {
+      console.log("Navigation matched", exactRoute.path);
+      return exactRoute.path;
+    }
+
+    if (!hasNavigationAction(cleanText)) {
+      console.log("No navigation intent", cleanText);
+      return "";
+    }
+
+    const matchedRoute = NAV_ROUTES.find((route) => route.phrases.some((phrase) => hasRoutePhrase(cleanText, phrase)));
+    if (matchedRoute) {
+      console.log("Navigation matched", matchedRoute.path);
+      return matchedRoute.path;
+    }
+
+    console.log("No navigation intent", cleanText);
+    return "";
   }
 
   function navigateAfterRender(path) {
@@ -239,7 +305,7 @@
     console.log("Archivist navigation requested", path);
     window.setTimeout(() => {
       try {
-        window.location.assign(path);
+        window.location.href = path;
       } catch (error) {
         console.error("Archivist AI navigation failed:", {
           navigateTo: path,
@@ -247,7 +313,7 @@
         });
         renderHistory();
       }
-    }, 500);
+    }, 300);
   }
 
   async function fetchReply(messages) {
@@ -331,10 +397,12 @@
       };
     } catch (error) {
       if (isTimeoutError(error)) {
-        console.error("Archivist AI request timed out:", {
-          timeoutMs: REQUEST_TIMEOUT_MS,
-          error
-        });
+        if (DEBUG) {
+          console.error("Archivist AI request timed out:", {
+            timeoutMs: REQUEST_TIMEOUT_MS,
+            error
+          });
+        }
         throw new Error(TIMEOUT_REPLY);
       }
 
@@ -350,24 +418,27 @@
     const content = input.value.trim();
     if (!content || pending) return;
 
-    input.value = "";
-    history = [...history, { role: "user", content }].slice(-MAX_HISTORY);
-    saveHistory();
+    const route = detectNavigationIntent(content);
 
-    const route = routeForMessage(content);
     if (route) {
-      const targetPath = route.path;
+      input.value = "";
       history = [...history, {
+        role: "user",
+        content
+      }, {
         role: "assistant",
-        content: navigationReply(route),
-        navigateTo: targetPath
+        content: "Fine. Opening it now, genius.",
+        navigateTo: route
       }].slice(-MAX_HISTORY);
       saveHistory();
       renderHistory();
-      navigateAfterRender(targetPath);
+      navigateAfterRender(route);
       return;
     }
 
+    input.value = "";
+    history = [...history, { role: "user", content }].slice(-MAX_HISTORY);
+    saveHistory();
     setSending(true);
 
     let navigateTo = "";
@@ -382,7 +453,11 @@
         navigateTo
       }].slice(-MAX_HISTORY);
     } catch (error) {
-      console.error("Archivist AI request failed:", error);
+      if (isTimeoutError(error)) {
+        if (DEBUG) console.error("Archivist AI request failed:", error);
+      } else {
+        console.error("Archivist AI request failed:", error);
+      }
       const reply = isTimeoutError(error) ? TIMEOUT_REPLY : FALLBACK_REPLY;
       history = [...history, { role: "assistant", content: reply }].slice(-MAX_HISTORY);
     } finally {
